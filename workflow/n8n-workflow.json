@@ -2,39 +2,42 @@
   "name": "HVAC Lead Automation",
   "nodes": [
     {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
       "parameters": {
-        "formTitle": "HVAC Lead Generation Request",
-        "formDescription": "Enter your search criteria for daily HVAC lead generation",
-        "formFields": {
-          "values": [
+        "values": {
+          "string": [
             {
-              "fieldLabel": "Business Type",
-              "fieldType": "text",
-              "requiredField": true
+              "name": "businessType",
+              "value": "HVAC contractor"
             },
             {
-              "fieldLabel": "Target Locations",
-              "fieldType": "textarea",
-              "requiredField": true
+              "name": "targetLocations",
+              "value": "Los Angeles, CA\nMiami, FL\nPhoenix, AZ"
             },
             {
-              "fieldLabel": "Search Keywords",
-              "fieldType": "text",
-              "requiredField": true
-            },
+              "name": "searchKeywords",
+              "value": "HVAC contractor, air conditioning repair"
+            }
+          ],
+          "number": [
             {
-              "fieldLabel": "Daily Lead Limit",
-              "fieldType": "number",
-              "requiredField": false
+              "name": "dailyLeadLimit",
+              "value": 100
             }
           ]
         },
         "options": {}
       },
-      "name": "Form Trigger",
-      "type": "n8n-nodes-base.formTrigger",
+      "name": "Set Input Parameters",
+      "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [250, 300]
+      "position": [350, 300]
     },
     {
       "parameters": {
@@ -43,7 +46,7 @@
       "name": "Input Validation",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [450, 300]
+      "position": [550, 300]
     },
     {
       "parameters": {
@@ -70,7 +73,7 @@
       "name": "Initialize Variables",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [650, 300]
+      "position": [750, 300]
     },
     {
       "parameters": {
@@ -336,7 +339,18 @@
     }
   ],
   "connections": {
-    "Form Trigger": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Input Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Input Parameters": {
       "main": [
         [
           {

@@ -6,14 +6,14 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ## Features
 
-- **Form-Based Lead Collection**: Customizable intake form for specifying search criteria
+- **Manual Execution**: Manually trigger workflow runs with customizable parameters
 - **Google Maps Scraping**: Automated business discovery with pagination
 - **Contact Enrichment**: Owner identification, email extraction, and LinkedIn matching
 - **Intelligent Deduplication**: Multi-field matching to prevent duplicates
 - **Rate Limiting**: Safe, compliant scraping with configurable delays
 - **Google Sheets Integration**: Automatic data storage with append-only writes
 - **Error Handling**: Comprehensive logging and retry mechanisms
-- **Daily Automation**: Scheduled execution with configurable limits
+- **Daily Automation**: Can be scheduled for daily execution with configurable limits
 
 ## Repository Structure
 
@@ -37,9 +37,9 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 1. **Import Workflow**: Import `workflow/n8n-workflow.json` into your n8n instance
 2. **Configure APIs**: Set up credentials for Google Maps, LinkedIn, and Google Sheets
-3. **Customize Form**: Adjust the intake form based on your requirements
-4. **Test Run**: Execute a test with a small lead limit (e.g., 5 leads)
-5. **Schedule**: Enable daily schedule trigger for automated operation
+3. **Customize Parameters**: Edit the "Set Input Parameters" node with your search criteria
+4. **Test Run**: Click "Execute Workflow" button to run with your parameters (start with small lead limit like 5)
+5. **Optional - Schedule**: Add a Schedule Trigger node if you want automated daily execution
 
 ## Workflow Architecture
 
@@ -47,7 +47,13 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ```
 ┌─────────────────┐
-│  Form Trigger   │ (Webhook/Form Node)
+│ Manual Trigger  │ (Click "Execute Workflow")
+│  - Click to run │
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐
+│ Set Input Params│ (Configurable Node)
 │  - Business Type│
 │  - Location(s)  │
 │  - Keywords     │
@@ -56,7 +62,7 @@ This repository contains a complete n8n automation workflow designed to scrape a
          │
          v
 ┌─────────────────┐
-│   Validation    │ (IF Node + Function)
+│   Validation    │ (Function Node)
 │  - Input check  │
 │  - Format data  │
 └────────┬────────┘

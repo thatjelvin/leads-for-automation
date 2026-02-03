@@ -7,8 +7,9 @@ This repository contains a **production-ready n8n automation workflow** designed
 ## What's Included
 
 ### 1. Complete n8n Workflow (`workflow/n8n-workflow.json`)
-- **18 nodes** configured and connected
-- **Form trigger** for user input
+- **19 nodes** configured and connected
+- **Manual trigger** for user-initiated execution
+- **Set Input Parameters** node for easy customization
 - **Google Maps scraping** with pagination
 - **Multi-source enrichment** (website, email, LinkedIn)
 - **Intelligent deduplication** to prevent duplicates
@@ -40,7 +41,9 @@ This repository contains a **production-ready n8n automation workflow** designed
 ## Key Features
 
 ### Automation Capabilities
-✅ **Form-based intake** - Customizable lead generation requests
+✅ **Manual execution** - Click to run workflow with configured parameters
+✅ **Easy customization** - Edit parameters in "Set Input Parameters" node
+✅ **Optional scheduling** - Add Schedule Trigger for automated daily runs
 ✅ **Google Maps scraping** - Automated business discovery
 ✅ **Contact enrichment** - Owner names, emails, LinkedIn profiles
 ✅ **Email finding** - Hunter.io integration with fallbacks
@@ -110,27 +113,36 @@ cp .env.example .env
 # Add Sheet ID to workflow
 ```
 
-### 4. Test Run
+### 4. Customize Parameters
 ```bash
-# Open Form Trigger node
-# Get test URL
-# Submit form with limit: 5
-# Monitor execution
+# Open workflow in n8n
+# Edit "Set Input Parameters" node:
+# - Business Type: "HVAC contractor"
+# - Target Locations: "Phoenix, AZ\nLos Angeles, CA"
+# - Search Keywords: "HVAC repair, AC service"
+# - Daily Lead Limit: 5
+```
+
+### 5. Test Run
+```bash
+# Click "Execute Workflow" button in n8n
+# Monitor execution in the workflow view
 # Verify results in Google Sheets
 ```
 
-### 5. Schedule Daily Runs
+### 6. Optional - Schedule Daily Runs
 ```bash
-# Add Cron node: 0 9 * * * (9 AM daily)
+# Add Schedule Trigger node
+# Set cron: 0 9 * * * (9 AM daily)
+# Connect to "Set Input Parameters" node
 # Activate workflow
-# Monitor first few runs
 ```
 
 ## Architecture Highlights
 
 ### Data Flow
 ```
-Form Input → Validation → Loop Control → Google Maps API → 
+Manual Click → Set Parameters → Validation → Loop Control → Google Maps API → 
 Parse Results → Rate Limiter → Enrichment (parallel) →
 Deduplication → Quality Filter → Google Sheets → Notification
 ```

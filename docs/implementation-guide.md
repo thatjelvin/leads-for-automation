@@ -128,27 +128,50 @@ You'll need to obtain API keys for the following services:
    - Open "Append to Leads Sheet" node
    - Enter your Sheet ID in credentials
 
-### Step 4: Test the Workflow
+### Step 4: Customize Input Parameters
 
-#### Test Form Trigger
+1. Open the workflow in n8n
+2. Double-click the **"Set Input Parameters"** node
+3. Edit the values according to your needs:
+   - **businessType**: Change to your target niche (e.g., "HVAC contractor")
+   - **targetLocations**: Enter locations one per line:
+     ```
+     Los Angeles, CA
+     Miami, FL
+     Phoenix, AZ
+     ```
+   - **searchKeywords**: Enter comma-separated keywords:
+     ```
+     HVAC contractor, air conditioning repair, heating services
+     ```
+   - **dailyLeadLimit**: Set your daily limit (default: 100, max: 500)
+4. Click "Save" to save the changes
 
-1. Open the "Form Intake" node
-2. Click "Test URL" to get the form link
-3. Open the form and submit test data:
-   - Business Type: `HVAC contractor`
-   - Target Locations: `Phoenix, AZ`
-   - Keywords: `HVAC repair`
-   - Daily Lead Limit: `5`
-4. Submit the form
+### Step 5: Test the Workflow
 
-#### Monitor Execution
+#### Manual Test Run
 
-1. Go to Executions panel
-2. Watch the workflow execute
-3. Check each node output:
-   - Green = success
-   - Red = error
-   - Yellow = warning
+1. With the workflow open in n8n, click the **"Execute Workflow"** button (top right)
+2. The workflow will run with your configured parameters
+3. Monitor the execution:
+   - Watch each node turn green as it completes
+   - Check for any red (error) or yellow (warning) nodes
+4. Review the output data by clicking on each node
+
+#### Test with Small Limit
+
+For your first test, set the `dailyLeadLimit` to **5** in the "Set Input Parameters" node:
+```json
+{
+  "name": "dailyLeadLimit",
+  "value": 5
+}
+```
+
+This will:
+- Run quickly (~5 minutes)
+- Use minimal API credits
+- Let you verify the workflow works correctly
 
 #### Verify Results
 
@@ -159,16 +182,35 @@ You'll need to obtain API keys for the following services:
    - No duplicates?
    - HVAC-relevant businesses?
 
-### Step 5: Schedule Daily Execution
+### Step 6: Optional - Schedule Daily Execution
 
-1. Add a **Cron** node at the start of workflow
-2. Configure schedule:
-   - **Cron Expression**: `0 9 * * *` (9 AM daily)
-   - **Timezone**: Your local timezone
-3. Connect Cron to Initialize Variables node
-4. Disconnect the Form Trigger (or keep both for manual runs)
-5. Save workflow
-6. Activate workflow (toggle in top-right)
+If you want the workflow to run automatically on a schedule:
+
+1. Add a **Schedule Trigger** node to the workflow:
+   - Click the "+" button to add a new node
+   - Search for "Schedule Trigger"
+   - Add it to the canvas
+
+2. Configure the schedule:
+   - **Trigger Interval**: Choose "Cron"
+   - **Cron Expression**: `0 9 * * *` (runs at 9 AM daily)
+   - **Timezone**: Select your local timezone
+
+3. Connect the Schedule Trigger:
+   - Remove the connection from "Manual Trigger"
+   - Connect "Schedule Trigger" → "Set Input Parameters"
+   - Keep "Manual Trigger" for manual runs
+
+4. Alternative: Use both triggers
+   - Keep "Manual Trigger" connected for manual runs
+   - Add "Schedule Trigger" connected to same "Set Input Parameters" node
+   - This allows both manual and scheduled execution
+
+5. Save and activate the workflow:
+   - Click "Save" button
+   - Toggle the "Active" switch (top-right)
+
+**Note**: With a schedule trigger active, the workflow will run automatically at the specified time using the parameters in the "Set Input Parameters" node.
 
 ---
 
@@ -176,37 +218,36 @@ You'll need to obtain API keys for the following services:
 
 ### Adjusting Lead Limit
 
-Edit the "Initialize Variables" node:
+Edit the "Set Input Parameters" node:
 ```json
 {
-  "name": "leadLimit",
-  "value": 100
+  "name": "dailyLeadLimit",
+  "value": 50
 }
 ```
 
 ### Changing Search Locations
 
-Update the form or hard-code in "Initialize Variables":
-```javascript
-const locations = [
-  "Los Angeles, CA",
-  "Miami, FL",
-  "Phoenix, AZ",
-  "Dallas, TX"
-];
+Edit the "Set Input Parameters" node, update the targetLocations value:
 ```
+Los Angeles, CA
+Miami, FL
+Phoenix, AZ
+Dallas, TX
+```
+
+(Use actual line breaks in the n8n editor, or use \\n in JSON)
 
 ### Customizing Keywords
 
-Modify search keywords for your niche:
-```javascript
-const keywords = [
-  "HVAC contractor",
-  "air conditioning repair",
-  "heating services",
-  "AC installation"
-];
+Edit the "Set Input Parameters" node, update the searchKeywords value:
+
+Modify search keywords for your niche in the "Set Input Parameters" node:
 ```
+HVAC contractor, air conditioning repair, heating services, AC installation
+```
+
+(Use comma separation)
 
 ### Rate Limiting
 
