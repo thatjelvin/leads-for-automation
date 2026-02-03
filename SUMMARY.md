@@ -8,7 +8,7 @@ This repository contains a **production-ready n8n automation workflow** designed
 
 ### 1. Complete n8n Workflow (`workflow/n8n-workflow.json`)
 - **18 nodes** configured and connected
-- **Execute Workflow Trigger with Form** - popup form for entering parameters
+- **Form Trigger** - webhook-based form for collecting parameters
 - **Google Maps scraping** with pagination
 - **Multi-source enrichment** (website, email, LinkedIn)
 - **Intelligent deduplication** to prevent duplicates
@@ -40,8 +40,9 @@ This repository contains a **production-ready n8n automation workflow** designed
 ## Key Features
 
 ### Automation Capabilities
-✅ **Interactive form popup** - Enter parameters in a form when you execute
-✅ **Easy parameter entry** - Fill in form fields each time you run
+✅ **Form-based intake** - Web form via webhook for parameter collection
+✅ **Automatic execution** - Workflow runs when form is submitted
+✅ **Shareable form URL** - Can be accessed by anyone with the link
 ✅ **Optional scheduling** - Add Schedule Trigger for automated daily runs
 ✅ **Google Maps scraping** - Automated business discovery
 ✅ **Contact enrichment** - Owner names, emails, LinkedIn profiles
@@ -112,21 +113,24 @@ cp .env.example .env
 # Add Sheet ID to workflow
 ```
 
-### 4. Execute with Form Popup
+### 4. Get Form URL and Submit
 ```bash
-# Click "Execute Workflow" button in n8n
-# Form popup appears with fields:
+# Open "Form Trigger" node in n8n
+# Click "Test URL" to get the form link
+# Open URL in browser
+# Fill in form:
 # - Business Type: "HVAC contractor"
 # - Target Locations: "Phoenix, AZ" (one per line)
 # - Search Keywords: "HVAC repair, AC service"
 # - Daily Lead Limit: 5
-# Fill in form and click "Execute"
+# Click Submit
 ```
 
 ### 5. Test Run
 ```bash
-# After filling the form popup and clicking Execute
-# Monitor execution in the workflow view
+# After submitting the form
+# Go to Executions panel in n8n
+# Monitor the workflow execution
 # Verify results in Google Sheets
 ```
 
@@ -142,7 +146,7 @@ cp .env.example .env
 
 ### Data Flow
 ```
-Form Popup (manual entry) → Validation → Loop Control → Google Maps API → 
+Form Submission (webhook) → Validation → Loop Control → Google Maps API → 
 Parse Results → Rate Limiter → Enrichment (parallel) →
 Deduplication → Quality Filter → Google Sheets → Notification
 ```

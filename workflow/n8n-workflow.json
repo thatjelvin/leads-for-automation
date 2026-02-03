@@ -3,41 +3,36 @@
   "nodes": [
     {
       "parameters": {
-        "fieldsUi": {
+        "formTitle": "HVAC Lead Generation Request",
+        "formDescription": "Enter your search criteria for daily HVAC lead generation",
+        "formFields": {
           "values": [
             {
-              "displayName": "Business Type",
-              "fieldName": "businessType",
-              "fieldType": "string",
-              "required": true,
-              "defaultValue": "HVAC contractor"
+              "fieldLabel": "Business Type",
+              "fieldType": "text",
+              "requiredField": true
             },
             {
-              "displayName": "Target Locations",
-              "fieldName": "targetLocations",
-              "fieldType": "multiline",
-              "required": true,
-              "defaultValue": "Los Angeles, CA\nMiami, FL\nPhoenix, AZ"
+              "fieldLabel": "Target Locations",
+              "fieldType": "textarea",
+              "requiredField": true
             },
             {
-              "displayName": "Search Keywords",
-              "fieldName": "searchKeywords",
-              "fieldType": "string",
-              "required": true,
-              "defaultValue": "HVAC contractor, air conditioning repair"
+              "fieldLabel": "Search Keywords",
+              "fieldType": "text",
+              "requiredField": true
             },
             {
-              "displayName": "Daily Lead Limit",
-              "fieldName": "dailyLeadLimit",
+              "fieldLabel": "Daily Lead Limit",
               "fieldType": "number",
-              "required": false,
-              "defaultValue": 100
+              "requiredField": false
             }
           ]
-        }
+        },
+        "options": {}
       },
-      "name": "Execute Workflow Trigger",
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 1,
       "position": [250, 300]
     },
@@ -341,7 +336,7 @@
     }
   ],
   "connections": {
-    "Execute Workflow Trigger": {
+    "Form Trigger": {
       "main": [
         [
           {

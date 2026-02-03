@@ -1,5 +1,5 @@
 {
-  "note": "This form template is provided for reference only. The workflow now uses Manual Trigger with a 'Set Input Parameters' node instead of a form trigger. If you want to use a form-based approach, you can replace the Manual Trigger with a Form Trigger using this configuration.",
+  "note": "This is the configuration reference for the Form Trigger used in the workflow. The workflow uses this form trigger to collect lead generation parameters via a webhook.",
   "formTitle": "HVAC Lead Generation Request",
   "formDescription": "Enter your search criteria for daily HVAC lead generation",
   "fields": [

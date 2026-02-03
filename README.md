@@ -6,14 +6,14 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ## Features
 
-- **Interactive Form Execution**: Popup form appears when you execute the workflow, allowing you to enter parameters
+- **Form-Based Lead Collection**: Customizable intake form for specifying search criteria via webhook
 - **Google Maps Scraping**: Automated business discovery with pagination
 - **Contact Enrichment**: Owner identification, email extraction, and LinkedIn matching
 - **Intelligent Deduplication**: Multi-field matching to prevent duplicates
 - **Rate Limiting**: Safe, compliant scraping with configurable delays
 - **Google Sheets Integration**: Automatic data storage with append-only writes
 - **Error Handling**: Comprehensive logging and retry mechanisms
-- **Optional Daily Automation**: Can be scheduled for daily execution with configurable limits
+- **Daily Automation**: Scheduled execution with configurable limits
 
 ## Repository Structure
 
@@ -37,13 +37,13 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 1. **Import Workflow**: Import `workflow/n8n-workflow.json` into your n8n instance
 2. **Configure APIs**: Set up credentials for Google Maps, LinkedIn, and Google Sheets
-3. **Execute with Form**: Click "Execute Workflow" button - a form will popup asking for:
+3. **Get Form URL**: Open the Form Trigger node and copy the webhook URL
+4. **Submit Form**: Visit the form URL in your browser and enter:
    - Business Type (e.g., "HVAC contractor")
    - Target Locations (one per line)
    - Search Keywords (comma-separated)
    - Daily Lead Limit (default: 100)
-4. **Enter Parameters**: Fill in the form with your search criteria and submit
-5. **Watch Execution**: Monitor the workflow as it runs with your parameters
+5. **Submit**: The workflow will automatically run when you submit the form
 6. **Optional - Schedule**: Add a Schedule Trigger node if you want automated daily execution
 
 ## Workflow Architecture
@@ -52,9 +52,8 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ```
 ┌─────────────────┐
-│Execute Workflow │ (Click button - Form Popup appears)
-│  Trigger + Form │
-│  - Business Type│ ← Enter values in popup form
+│  Form Trigger   │ (Webhook/Form Node)
+│  - Business Type│
 │  - Location(s)  │
 │  - Keywords     │
 │  - Lead Limit   │

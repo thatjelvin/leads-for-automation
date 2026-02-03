@@ -4,7 +4,7 @@ This document provides a detailed breakdown of each node in the HVAC lead automa
 
 ## Table of Contents
 
-1. [Execute Workflow Trigger (with Form)](#1-execute-workflow-trigger-with-form)
+1. [Form Intake Trigger](#1-form-intake-trigger)
 2. [Input Validation](#2-input-validation)
 3. [Initialize Variables](#3-initialize-variables)
 4. [Google Maps Search Loop](#4-google-maps-search-loop)
@@ -23,84 +23,76 @@ This document provides a detailed breakdown of each node in the HVAC lead automa
 
 ---
 
-## 1. Execute Workflow Trigger (with Form)
+## 1. Form Intake Trigger
 
-**Node Type**: `Execute Workflow Trigger`
+**Node Type**: `Webhook` or `n8n Form Trigger`
 
-**Purpose**: Display a popup form when manually executing the workflow, allowing you to enter search parameters
+**Purpose**: Collect lead generation parameters from the user via a web form
 
 ### Configuration
 
 ```json
 {
-  "name": "Execute Workflow Trigger",
-  "type": "n8n-nodes-base.executeWorkflowTrigger",
+  "name": "Form Trigger",
+  "type": "n8n-nodes-base.formTrigger",
   "position": [250, 300],
   "parameters": {
-    "fieldsUi": {
+    "formTitle": "HVAC Lead Generation Request",
+    "formDescription": "Enter your search criteria for daily HVAC lead generation",
+    "formFields": {
       "values": [
         {
-          "displayName": "Business Type",
-          "fieldName": "businessType",
-          "fieldType": "string",
-          "required": true,
-          "defaultValue": "HVAC contractor"
+          "fieldLabel": "Business Type",
+          "fieldType": "text",
+          "requiredField": true
         },
         {
-          "displayName": "Target Locations",
-          "fieldName": "targetLocations",
-          "fieldType": "multiline",
-          "required": true,
-          "defaultValue": "Los Angeles, CA\\nMiami, FL\\nPhoenix, AZ"
+          "fieldLabel": "Target Locations",
+          "fieldType": "textarea",
+          "requiredField": true
         },
         {
-          "displayName": "Search Keywords",
-          "fieldName": "searchKeywords",
-          "fieldType": "string",
-          "required": true,
-          "defaultValue": "HVAC contractor, air conditioning repair"
+          "fieldLabel": "Search Keywords",
+          "fieldType": "text",
+          "requiredField": true
         },
         {
-          "displayName": "Daily Lead Limit",
-          "fieldName": "dailyLeadLimit",
+          "fieldLabel": "Daily Lead Limit",
           "fieldType": "number",
-          "required": false,
-          "defaultValue": 100
+          "requiredField": false
         }
       ]
-    }
+    },
+    "options": {}
   }
 }
 ```
 
 ### Usage
 
-1. Click the **"Execute Workflow"** button in n8n
-2. A form popup will appear on your screen with fields for:
-   - **Business Type**: Type of business to target (e.g., "HVAC contractor")
-   - **Target Locations**: Enter locations one per line
-   - **Search Keywords**: Comma-separated search terms
-   - **Daily Lead Limit**: Maximum leads to collect (1-500)
-3. Fill in the form with your desired parameters
-4. Click "Execute" to run the workflow with those values
+1. Open the **Form Trigger** node in n8n
+2. Click on the **"Test URL"** or **"Production URL"** to get the webhook form link
+3. Share this URL or visit it yourself
+4. Fill out the form with your search criteria
+5. Submit the form - the workflow will automatically execute with your parameters
 
 ### Form Fields
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| Business Type | String | Yes | "HVAC contractor" | Target industry |
-| Target Locations | Multiline | Yes | Multiple cities | One location per line |
-| Search Keywords | String | Yes | Keywords | Comma-separated |
-| Daily Lead Limit | Number | No | 100 | Max leads (1-500) |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| Business Type | Text | Yes | Target industry (e.g., "HVAC contractor") |
+| Target Locations | Textarea | Yes | One location per line |
+| Search Keywords | Text | Yes | Comma-separated search terms |
+| Daily Lead Limit | Number | No | Max leads (default: 100) |
 
 ### Output Data Structure
 
-When you submit the form, the values are available as:
+When the form is submitted, the values are available as:
 
 ```json
 {
   "businessType": "HVAC contractor",
-  "targetLocations": "Los Angeles, CA\\nMiami, FL\\nPhoenix, AZ",
+  "targetLocations": "Los Angeles, CA\nMiami, FL",
   "searchKeywords": "HVAC contractor, air conditioning repair",
   "dailyLeadLimit": 100
 }

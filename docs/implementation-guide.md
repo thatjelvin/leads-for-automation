@@ -128,32 +128,42 @@ You'll need to obtain API keys for the following services:
    - Open "Append to Leads Sheet" node
    - Enter your Sheet ID in credentials
 
-### Step 4: Test the Workflow with Form Popup
+### Step 4: Test the Workflow
 
-#### Manual Test Run
+#### Get the Form URL
 
-1. With the workflow open in n8n, click the **"Execute Workflow"** button (top right)
-2. A **form popup will appear** on your screen with fields:
-   - **Business Type**: Enter your target industry
-   - **Target Locations**: Enter cities (one per line)
-   - **Search Keywords**: Enter comma-separated keywords
-   - **Daily Lead Limit**: Enter number of leads (recommended: 5 for testing)
+1. Open the workflow in n8n
+2. Click on the **"Form Trigger"** node
+3. You'll see options for:
+   - **Test URL**: Use this for testing (temporary)
+   - **Production URL**: Use this for live workflow (permanent)
+4. Click **"Test URL"** to get the form link
+5. Copy the URL
 
-3. Example test values:
-   ```
-   Business Type: HVAC contractor
-   Target Locations: 
-   Phoenix, AZ
-   
-   Search Keywords: HVAC repair, AC service
-   Daily Lead Limit: 5
-   ```
+#### Test Form Submission
 
-4. Click **"Execute"** in the form popup
-5. The workflow will run with your entered parameters
-6. Monitor the execution:
-   - Watch each node turn green as it completes
-   - Check for any red (error) or yellow (warning) nodes
+1. Open the copied URL in your browser
+2. You'll see a form with fields:
+   - **Business Type**: Enter "HVAC contractor"
+   - **Target Locations**: Enter (one per line):
+     ```
+     Phoenix, AZ
+     ```
+   - **Search Keywords**: Enter "HVAC repair"
+   - **Daily Lead Limit**: Enter 5
+3. Click **"Submit"** button
+4. The workflow will automatically start executing
+
+#### Monitor Execution
+
+1. Go back to n8n
+2. Go to **Executions** panel (left sidebar)
+3. You should see a new execution running
+4. Click on it to watch the workflow execute
+5. Check each node output:
+   - Green = success
+   - Red = error
+   - Yellow = warning
 
 #### Verify Results
 
@@ -178,49 +188,53 @@ If you want the workflow to run automatically on a schedule:
    - **Cron Expression**: `0 9 * * *` (runs at 9 AM daily)
    - **Timezone**: Select your local timezone
 
-3. Configure default values for scheduled runs:
-   - When using a Schedule Trigger, you'll need to provide default values
+3. Add default parameters:
+   - When using a Schedule Trigger, you need default values
    - Add a "Set" node after the Schedule Trigger with default parameters
    - Connect: Schedule Trigger → Set (with defaults) → Input Validation
 
-4. Connect the Execute Workflow Trigger:
-   - Keep "Execute Workflow Trigger" connected for manual runs with form popup
-   - Add "Schedule Trigger" → "Set" (defaults) → "Input Validation" for automated runs
-   - This allows both manual (with form) and scheduled execution
+4. Keep both triggers if needed:
+   - **Form Trigger** for manual submissions via web form
+   - **Schedule Trigger** for automated daily runs
+   - Both can connect to the workflow
 
 5. Save and activate the workflow:
    - Click "Save" button
-   - Toggle the "Active" switch (top-right) if you want scheduled runs
+   - Toggle the "Active" switch (top-right) for scheduled runs
 
-**Note**: With both triggers:
-- Manual execution shows the form popup for you to enter values
-- Scheduled execution uses the default values from the Set node
+**Note**: 
+- The Form Trigger URL remains active and can accept form submissions anytime
+- The Schedule Trigger runs automatically at the configured time with default values
 
 ---
 
 ## Configuration Options
 
-### Running Manual Tests
+### Changing Form Parameters
 
-Each time you click "Execute Workflow", you'll see a form popup where you can:
-- Adjust the lead limit (use 5-10 for quick tests)
-- Change target locations
-- Modify search keywords
-- Update business type
+The form is configured in the "Form Trigger" node. To customize:
+
+1. Double-click the "Form Trigger" node
+2. Modify form settings:
+   - **Form Title**: Change the form heading
+   - **Form Description**: Update the description
+   - **Form Fields**: Add/remove/edit fields
+   - **Options**: Configure webhook path, success message, etc.
+
+### Using the Form
+
+Each time someone (including you) submits the form:
+- The workflow automatically executes with the submitted values
+- No need to manually start the workflow
+- You can share the form URL with others
 
 ### For Scheduled Runs
 
-If you add a Schedule Trigger for automation:
+If you add a Schedule Trigger:
 1. Add a "Set" node after the Schedule Trigger
 2. Configure default values in that Set node
 3. Connect: Schedule Trigger → Set (defaults) → Input Validation
-
-### Changing Default Form Values
-
-Edit the "Execute Workflow Trigger" node:
-- Double-click the node
-- Modify the "Default Value" for each field
-- These appear pre-filled in the form popup
+4. The form trigger can still be used for manual submissions
 
 ### Rate Limiting
 
