@@ -1,0 +1,206 @@
+{
+  "sheetName": "HVAC Leads Database",
+  "tabs": [
+    {
+      "name": "Leads",
+      "columns": [
+        {
+          "header": "Company Name",
+          "type": "string",
+          "required": true,
+          "description": "Business name as found on Google Maps"
+        },
+        {
+          "header": "Owner First Name",
+          "type": "string",
+          "required": false,
+          "description": "First name of business owner/founder"
+        },
+        {
+          "header": "Email",
+          "type": "string",
+          "required": false,
+          "format": "email",
+          "description": "Business email address (preferably personal)"
+        },
+        {
+          "header": "Phone Numbers",
+          "type": "string",
+          "required": false,
+          "description": "Comma-separated phone numbers"
+        },
+        {
+          "header": "Website",
+          "type": "string",
+          "required": false,
+          "format": "url",
+          "description": "Company website URL"
+        },
+        {
+          "header": "LinkedIn URL",
+          "type": "string",
+          "required": false,
+          "format": "url",
+          "description": "LinkedIn company profile URL"
+        },
+        {
+          "header": "Category",
+          "type": "string",
+          "required": false,
+          "description": "Business category from Google Maps"
+        },
+        {
+          "header": "Location",
+          "type": "string",
+          "required": false,
+          "description": "City, State format"
+        },
+        {
+          "header": "Google Maps URL",
+          "type": "string",
+          "required": false,
+          "format": "url",
+          "description": "Link to Google Maps listing"
+        },
+        {
+          "header": "Date Scraped",
+          "type": "datetime",
+          "required": true,
+          "format": "YYYY-MM-DD HH:mm:ss",
+          "description": "Timestamp when lead was collected"
+        },
+        {
+          "header": "Source Query",
+          "type": "string",
+          "required": false,
+          "description": "Search query used to find this lead"
+        }
+      ],
+      "formatting": {
+        "headerRow": 1,
+        "freezeRows": 1,
+        "freezeColumns": 1,
+        "alternatingColors": true,
+        "filters": true
+      }
+    },
+    {
+      "name": "Metrics",
+      "columns": [
+        {
+          "header": "Date",
+          "type": "date",
+          "format": "YYYY-MM-DD"
+        },
+        {
+          "header": "Total Scraped",
+          "type": "number"
+        },
+        {
+          "header": "Qualified Leads",
+          "type": "number"
+        },
+        {
+          "header": "Duplicates Removed",
+          "type": "number"
+        },
+        {
+          "header": "With Email",
+          "type": "number"
+        },
+        {
+          "header": "With Owner Name",
+          "type": "number"
+        },
+        {
+          "header": "With LinkedIn",
+          "type": "number"
+        },
+        {
+          "header": "Execution Time (s)",
+          "type": "number"
+        },
+        {
+          "header": "Error Count",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Errors",
+      "columns": [
+        {
+          "header": "Timestamp",
+          "type": "datetime",
+          "format": "YYYY-MM-DD HH:mm:ss"
+        },
+        {
+          "header": "Node Name",
+          "type": "string"
+        },
+        {
+          "header": "Error Message",
+          "type": "string"
+        },
+        {
+          "header": "Company Name",
+          "type": "string"
+        },
+        {
+          "header": "Search Query",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "dataValidation": {
+    "Email": {
+      "type": "custom",
+      "formula": "=REGEXMATCH(C2, \"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\")"
+    },
+    "Phone Numbers": {
+      "type": "custom",
+      "formula": "=OR(ISBLANK(D2), REGEXMATCH(D2, \"^[0-9+, -]+$\"))"
+    }
+  },
+  "conditionalFormatting": [
+    {
+      "range": "B2:B",
+      "condition": "NOT_BLANK",
+      "format": {
+        "backgroundColor": "#d9ead3"
+      }
+    },
+    {
+      "range": "C2:C",
+      "condition": "NOT_BLANK",
+      "format": {
+        "backgroundColor": "#d9ead3"
+      }
+    },
+    {
+      "range": "F2:F",
+      "condition": "NOT_BLANK",
+      "format": {
+        "backgroundColor": "#d9ead3"
+      }
+    }
+  ],
+  "notes": {
+    "setup": [
+      "1. Create a new Google Sheet",
+      "2. Create tabs: Leads, Metrics, Errors",
+      "3. Add column headers as specified",
+      "4. Freeze first row in each tab",
+      "5. Apply data validation and conditional formatting",
+      "6. Share with service account email (from n8n credentials)",
+      "7. Copy Sheet ID from URL and add to n8n workflow"
+    ],
+    "maintenance": [
+      "- Review leads weekly for quality",
+      "- Archive leads older than 12 months (GDPR)",
+      "- Check Metrics tab for performance trends",
+      "- Review Errors tab for recurring issues"
+    ]
+  }
+}

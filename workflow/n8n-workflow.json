@@ -1,0 +1,532 @@
+{
+  "name": "HVAC Lead Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "HVAC Lead Generation Request",
+        "formDescription": "Enter your search criteria for daily HVAC lead generation",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Business Type",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Locations",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Search Keywords",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Daily Lead Limit",
+              "fieldType": "number",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate and format input data\nconst businessType = $input.item.json.businessType;\nconst locations = $input.item.json.targetLocations;\nconst keywords = $input.item.json.searchKeywords;\nconst leadLimit = $input.item.json.dailyLeadLimit || 100;\n\nif (!businessType || businessType.trim() === '') {\n  throw new Error('Business type is required');\n}\n\nif (!locations || locations.trim() === '') {\n  throw new Error('At least one location is required');\n}\n\nif (!keywords || keywords.trim() === '') {\n  throw new Error('Search keywords are required');\n}\n\nif (leadLimit < 1 || leadLimit > 500) {\n  throw new Error('Daily lead limit must be between 1 and 500');\n}\n\nconst locationArray = locations.split('\\n').map(loc => loc.trim()).filter(loc => loc !== '');\nconst keywordArray = keywords.split(',').map(kw => kw.trim()).filter(kw => kw !== '');\n\nreturn {\n  json: {\n    config: {\n      businessType: businessType.trim(),\n      locations: locationArray,\n      keywords: keywordArray,\n      leadLimit: leadLimit,\n      processedLeads: 0,\n      startTime: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "name": "Input Validation",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "currentLocation",
+              "value": "={{ $json.config.locations[0] }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "leadsCollected",
+              "value": 0
+            },
+            {
+              "name": "locationIndex",
+              "value": 0
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Initialize Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Loop control logic\nconst config = $('Input Validation').item.json.config;\nconst leadsCollected = $json.leadsCollected || 0;\nconst locationIndex = $json.locationIndex || 0;\n\nif (leadsCollected >= config.leadLimit) {\n  return { json: { shouldContinue: false, message: 'Lead limit reached' } };\n}\n\nif (locationIndex >= config.locations.length) {\n  return { json: { shouldContinue: false, message: 'All locations processed' } };\n}\n\nconst currentLocation = config.locations[locationIndex];\nconst currentKeyword = config.keywords[0]; // Use first keyword\nconst searchQuery = `${currentKeyword} in ${currentLocation}`;\n\nreturn {\n  json: {\n    shouldContinue: true,\n    searchQuery: searchQuery,\n    location: currentLocation,\n    keyword: currentKeyword,\n    leadsCollected: leadsCollected,\n    locationIndex: locationIndex\n  }\n};"
+      },
+      "name": "Loop Control",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.outscraper.com/maps/search-v3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.searchQuery }}"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Google Maps Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Outscraper API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Google Maps results\nconst response = $input.item.json;\nconst results = response.data || response.results || [];\nconst leads = [];\n\nfor (const business of results) {\n  const lead = {\n    companyName: business.name || '',\n    category: business.category || business.type || '',\n    phoneNumbers: [],\n    website: business.website || business.site || '',\n    mapsUrl: business.url || business.link || '',\n    address: business.address || '',\n    city: business.city || '',\n    state: business.state || '',\n    country: business.country || 'USA',\n    rating: business.rating || null,\n    reviewCount: business.reviews || business.review_count || 0,\n    placeId: business.place_id || business.google_id || ''\n  };\n  \n  if (business.phone) {\n    if (Array.isArray(business.phone)) {\n      lead.phoneNumbers = business.phone;\n    } else {\n      lead.phoneNumbers = [business.phone];\n    }\n  }\n  \n  lead.phoneNumbers = lead.phoneNumbers\n    .map(phone => phone.replace(/[^\\d+]/g, ''))\n    .filter(phone => phone.length >= 10);\n  \n  if (lead.companyName && (lead.phoneNumbers.length > 0 || lead.website)) {\n    leads.push(lead);\n  }\n}\n\nreturn leads.map(lead => ({ json: lead }));"
+      },
+      "name": "Parse Maps Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": "={{ Math.floor(Math.random() * 3) + 2 }}"
+      },
+      "name": "Rate Limiter",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "name": "Website Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/domain-search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "queryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.website.replace('https://', '').replace('http://', '').split('/')[0] }}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $credentials.hunterApiKey }}"
+            },
+            {
+              "name": "type",
+              "value": "personal"
+            },
+            {
+              "name": "limit",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "name": "Email Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 300],
+      "continueOnFail": true,
+      "credentials": {
+        "queryAuth": {
+          "id": "2",
+          "name": "Hunter.io API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://linkedin-api8.p.rapidapi.com/search/company",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $json.companyName }}"
+            }
+          ]
+        }
+      },
+      "name": "LinkedIn Matcher",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 400],
+      "continueOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3",
+          "name": "RapidAPI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Deduplication check\nconst currentLead = $input.item.json;\nconst allLeads = $('Parse Maps Results').all();\n\nconst normalizeName = (name) => name.toLowerCase().trim().replace(/[^\\w\\s]/g, '');\nconst normalizePhone = (phone) => phone.replace(/[^\\d]/g, '');\n\nconst isDuplicate = allLeads.some((prevItem, index) => {\n  if (index === $itemIndex) return false;\n  const prevLead = prevItem.json;\n  \n  if (normalizeName(prevLead.companyName) === normalizeName(currentLead.companyName)) {\n    return true;\n  }\n  \n  const currentPhones = (currentLead.phoneNumbers || []).map(normalizePhone);\n  const prevPhones = (prevLead.phoneNumbers || []).map(normalizePhone);\n  \n  for (const phone of currentPhones) {\n    if (prevPhones.includes(phone)) {\n      return true;\n    }\n  }\n  \n  return false;\n});\n\nreturn {\n  json: {\n    ...currentLead,\n    isDuplicate: isDuplicate\n  }\n};"
+      },
+      "name": "Deduplication Check",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isDuplicate }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "name": "Filter Qualified",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company Name": "={{ $json.companyName }}",
+            "Owner First Name": "={{ $json.ownerFirstName || '' }}",
+            "Email": "={{ $json.email || '' }}",
+            "Phone Numbers": "={{ $json.phoneNumbers.join(', ') }}",
+            "Website": "={{ $json.website || '' }}",
+            "LinkedIn URL": "={{ $json.linkedinCompanyUrl || '' }}",
+            "Category": "={{ $json.category }}",
+            "Location": "={{ $json.city }}, {{ $json.state }}",
+            "Google Maps URL": "={{ $json.mapsUrl }}",
+            "Date Scraped": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+            "Source Query": "={{ $('Loop Control').item.json.searchQuery }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Append to Leads Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [2250, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate execution summary\nconst allLeads = $('Parse Maps Results').all();\nconst qualifiedLeads = $('Filter Qualified').all();\nconst config = $('Input Validation').item.json.config;\n\nconst summary = {\n  totalScraped: allLeads.length,\n  qualifiedLeads: qualifiedLeads.length,\n  duplicatesRemoved: allLeads.filter(item => item.json.isDuplicate).length,\n  executionTime: Math.floor((Date.now() - new Date(config.startTime)) / 1000),\n  timestamp: new Date().toISOString()\n};\n\nreturn { json: summary };"
+      },
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2450, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@yourdomain.com",
+        "toEmail": "admin@yourdomain.com",
+        "subject": "HVAC Lead Generation Complete - {{ $json.qualifiedLeads }} New Leads",
+        "emailFormat": "html",
+        "message": "=<h2>Daily Lead Generation Summary</h2>\n<ul>\n<li>Qualified Leads: {{ $json.qualifiedLeads }}</li>\n<li>Total Scraped: {{ $json.totalScraped }}</li>\n<li>Duplicates Removed: {{ $json.duplicatesRemoved }}</li>\n<li>Execution Time: {{ $json.executionTime }}s</li>\n</ul>"
+      },
+      "name": "Success Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2650, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error details\nconst error = $input.item.json.error;\nconst execution = $input.item.json.execution;\n\nconst errorLog = {\n  timestamp: new Date().toISOString(),\n  workflowId: execution.workflowId,\n  executionId: execution.id,\n  nodeName: error.node.name,\n  errorMessage: error.message,\n  errorStack: error.stack\n};\n\nreturn { json: errorLog };"
+      },
+      "name": "Log Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1450, 500]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourdomain.com",
+        "toEmail": "admin@yourdomain.com",
+        "subject": "HVAC Workflow Error - {{ $json.nodeName }}",
+        "message": "=An error occurred in the HVAC lead workflow:\n\nNode: {{ $json.nodeName }}\nError: {{ $json.errorMessage }}\nTime: {{ $json.timestamp }}\n\nPlease investigate."
+      },
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1650, 500],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Input Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Validation": {
+      "main": [
+        [
+          {
+            "node": "Initialize Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Variables": {
+      "main": [
+        [
+          {
+            "node": "Loop Control",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Control": {
+      "main": [
+        [
+          {
+            "node": "Google Maps Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Maps Scraper": {
+      "main": [
+        [
+          {
+            "node": "Parse Maps Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Maps Results": {
+      "main": [
+        [
+          {
+            "node": "Rate Limiter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limiter": {
+      "main": [
+        [
+          {
+            "node": "Website Scraper",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Enrichment",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn Matcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website Scraper": {
+      "main": [
+        [
+          {
+            "node": "Deduplication Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Deduplication Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Matcher": {
+      "main": [
+        [
+          {
+            "node": "Deduplication Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplication Check": {
+      "main": [
+        [
+          {
+            "node": "Filter Qualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Qualified": {
+      "main": [
+        [
+          {
+            "node": "Append to Leads Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Leads Sheet": {
+      "main": [
+        [
+          {
+            "node": "Build Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary": {
+      "main": [
+        [
+          {
+            "node": "Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Send Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-02-03T00:00:00.000Z",
+  "versionId": "1"
+}

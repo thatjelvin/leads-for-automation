@@ -1,0 +1,68 @@
+{
+  "formTitle": "HVAC Lead Generation Request",
+  "formDescription": "Enter your search criteria for daily HVAC lead generation",
+  "fields": [
+    {
+      "name": "businessType",
+      "label": "Business Type",
+      "type": "text",
+      "required": true,
+      "placeholder": "HVAC, AC Repair, Heating Services",
+      "description": "Type of HVAC business to target"
+    },
+    {
+      "name": "targetLocations",
+      "label": "Target Locations",
+      "type": "textarea",
+      "required": true,
+      "placeholder": "Los Angeles, CA\nMiami, FL\nPhoenix, AZ\nDallas, TX",
+      "description": "One location per line (City, State format)"
+    },
+    {
+      "name": "searchKeywords",
+      "label": "Search Keywords",
+      "type": "text",
+      "required": true,
+      "placeholder": "HVAC contractor, air conditioning repair, heating services",
+      "description": "Comma-separated keywords for Google Maps search"
+    },
+    {
+      "name": "dailyLeadLimit",
+      "label": "Daily Lead Limit",
+      "type": "number",
+      "required": false,
+      "default": 100,
+      "min": 1,
+      "max": 500,
+      "description": "Maximum number of leads to collect (default: 100)"
+    }
+  ],
+  "webhookPath": "hvac-leads-intake",
+  "submitButtonText": "Generate Leads",
+  "successMessage": "Your lead generation request has been submitted! You will receive an email when complete.",
+  "validation": {
+    "businessType": {
+      "minLength": 3,
+      "maxLength": 100,
+      "pattern": "^[a-zA-Z0-9\\s,]+$"
+    },
+    "targetLocations": {
+      "minLength": 5,
+      "maxLength": 1000
+    },
+    "searchKeywords": {
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "dailyLeadLimit": {
+      "min": 1,
+      "max": 500
+    }
+  },
+  "examples": {
+    "businessType": "HVAC contractor",
+    "targetLocations": "Los Angeles, CA\nSan Diego, CA\nSan Francisco, CA",
+    "searchKeywords": "HVAC repair, air conditioning service, heating installation",
+    "dailyLeadLimit": 100
+  }
+}
