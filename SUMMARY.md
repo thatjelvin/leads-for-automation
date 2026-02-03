@@ -7,9 +7,8 @@ This repository contains a **production-ready n8n automation workflow** designed
 ## What's Included
 
 ### 1. Complete n8n Workflow (`workflow/n8n-workflow.json`)
-- **19 nodes** configured and connected
-- **Manual trigger** for user-initiated execution
-- **Set Input Parameters** node for easy customization
+- **18 nodes** configured and connected
+- **Execute Workflow Trigger with Form** - popup form for entering parameters
 - **Google Maps scraping** with pagination
 - **Multi-source enrichment** (website, email, LinkedIn)
 - **Intelligent deduplication** to prevent duplicates
@@ -41,8 +40,8 @@ This repository contains a **production-ready n8n automation workflow** designed
 ## Key Features
 
 ### Automation Capabilities
-✅ **Manual execution** - Click to run workflow with configured parameters
-✅ **Easy customization** - Edit parameters in "Set Input Parameters" node
+✅ **Interactive form popup** - Enter parameters in a form when you execute
+✅ **Easy parameter entry** - Fill in form fields each time you run
 ✅ **Optional scheduling** - Add Schedule Trigger for automated daily runs
 ✅ **Google Maps scraping** - Automated business discovery
 ✅ **Contact enrichment** - Owner names, emails, LinkedIn profiles
@@ -113,19 +112,20 @@ cp .env.example .env
 # Add Sheet ID to workflow
 ```
 
-### 4. Customize Parameters
+### 4. Execute with Form Popup
 ```bash
-# Open workflow in n8n
-# Edit "Set Input Parameters" node:
+# Click "Execute Workflow" button in n8n
+# Form popup appears with fields:
 # - Business Type: "HVAC contractor"
-# - Target Locations: "Phoenix, AZ\nLos Angeles, CA"
+# - Target Locations: "Phoenix, AZ" (one per line)
 # - Search Keywords: "HVAC repair, AC service"
 # - Daily Lead Limit: 5
+# Fill in form and click "Execute"
 ```
 
 ### 5. Test Run
 ```bash
-# Click "Execute Workflow" button in n8n
+# After filling the form popup and clicking Execute
 # Monitor execution in the workflow view
 # Verify results in Google Sheets
 ```
@@ -142,7 +142,7 @@ cp .env.example .env
 
 ### Data Flow
 ```
-Manual Click → Set Parameters → Validation → Loop Control → Google Maps API → 
+Form Popup (manual entry) → Validation → Loop Control → Google Maps API → 
 Parse Results → Rate Limiter → Enrichment (parallel) →
 Deduplication → Quality Filter → Google Sheets → Notification
 ```

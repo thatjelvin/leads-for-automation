@@ -4,82 +4,68 @@ This document provides a detailed breakdown of each node in the HVAC lead automa
 
 ## Table of Contents
 
-1. [Manual Trigger](#1-manual-trigger)
-2. [Set Input Parameters](#2-set-input-parameters)
-3. [Input Validation](#3-input-validation)
-4. [Initialize Variables](#4-initialize-variables)
-5. [Google Maps Search Loop](#5-google-maps-search-loop)
-6. [HTTP Request - Google Maps](#6-http-request---google-maps)
-7. [Parse Maps Results](#7-parse-maps-results)
-8. [Rate Limiter](#8-rate-limiter)
-9. [Website Scraper](#9-website-scraper)
-10. [Email Enrichment](#10-email-enrichment)
-11. [LinkedIn Matcher](#11-linkedin-matcher)
-12. [MCP Enrichment Node](#12-mcp-enrichment-node)
-13. [Deduplication Check](#13-deduplication-check)
-14. [Filter Qualified Leads](#14-filter-qualified-leads)
-15. [Google Sheets Append](#15-google-sheets-append)
-16. [Error Handler](#16-error-handler)
-17. [Success Notification](#17-success-notification)
+1. [Execute Workflow Trigger (with Form)](#1-execute-workflow-trigger-with-form)
+2. [Input Validation](#2-input-validation)
+3. [Initialize Variables](#3-initialize-variables)
+4. [Google Maps Search Loop](#4-google-maps-search-loop)
+5. [HTTP Request - Google Maps](#5-http-request---google-maps)
+6. [Parse Maps Results](#6-parse-maps-results)
+7. [Rate Limiter](#7-rate-limiter)
+8. [Website Scraper](#8-website-scraper)
+9. [Email Enrichment](#9-email-enrichment)
+10. [LinkedIn Matcher](#10-linkedin-matcher)
+11. [MCP Enrichment Node](#11-mcp-enrichment-node)
+12. [Deduplication Check](#12-deduplication-check)
+13. [Filter Qualified Leads](#13-filter-qualified-leads)
+14. [Google Sheets Append](#14-google-sheets-append)
+15. [Error Handler](#15-error-handler)
+16. [Success Notification](#16-success-notification)
 
 ---
 
-## 1. Manual Trigger
+## 1. Execute Workflow Trigger (with Form)
 
-**Node Type**: `Manual Trigger`
+**Node Type**: `Execute Workflow Trigger`
 
-**Purpose**: Manually start the workflow execution
+**Purpose**: Display a popup form when manually executing the workflow, allowing you to enter search parameters
 
 ### Configuration
 
 ```json
 {
-  "name": "Manual Trigger",
-  "type": "n8n-nodes-base.manualTrigger",
+  "name": "Execute Workflow Trigger",
+  "type": "n8n-nodes-base.executeWorkflowTrigger",
   "position": [250, 300],
-  "parameters": {}
-}
-```
-
-### Usage
-
-Click the "Execute Workflow" button in n8n to start the workflow. This gives you full control over when the workflow runs.
-
----
-
-## 2. Set Input Parameters
-
-**Node Type**: `Set`
-
-**Purpose**: Define the search criteria and parameters for lead generation
-
-### Configuration
-
-```json
-{
-  "name": "Set Input Parameters",
-  "type": "n8n-nodes-base.set",
-  "position": [350, 300],
   "parameters": {
-    "values": {
-      "string": [
+    "fieldsUi": {
+      "values": [
         {
-          "name": "businessType",
-          "value": "HVAC contractor"
+          "displayName": "Business Type",
+          "fieldName": "businessType",
+          "fieldType": "string",
+          "required": true,
+          "defaultValue": "HVAC contractor"
         },
         {
-          "name": "targetLocations",
-          "value": "Los Angeles, CA\\nMiami, FL\\nPhoenix, AZ"
+          "displayName": "Target Locations",
+          "fieldName": "targetLocations",
+          "fieldType": "multiline",
+          "required": true,
+          "defaultValue": "Los Angeles, CA\\nMiami, FL\\nPhoenix, AZ"
         },
         {
-          "name": "searchKeywords",
-          "value": "HVAC contractor, air conditioning repair"
-        }
-      ],
-      "number": [
+          "displayName": "Search Keywords",
+          "fieldName": "searchKeywords",
+          "fieldType": "string",
+          "required": true,
+          "defaultValue": "HVAC contractor, air conditioning repair"
+        },
         {
-          "name": "dailyLeadLimit",
-          "value": 100
+          "displayName": "Daily Lead Limit",
+          "fieldName": "dailyLeadLimit",
+          "fieldType": "number",
+          "required": false,
+          "defaultValue": 100
         }
       ]
     }
@@ -87,15 +73,29 @@ Click the "Execute Workflow" button in n8n to start the workflow. This gives you
 }
 ```
 
-### How to Customize
+### Usage
 
-To change the search parameters, edit this node's values:
-- **businessType**: Type of business to target
-- **targetLocations**: One location per line (use \\n for line breaks)
-- **searchKeywords**: Comma-separated keywords
-- **dailyLeadLimit**: Maximum number of leads to collect (1-500)
+1. Click the **"Execute Workflow"** button in n8n
+2. A form popup will appear on your screen with fields for:
+   - **Business Type**: Type of business to target (e.g., "HVAC contractor")
+   - **Target Locations**: Enter locations one per line
+   - **Search Keywords**: Comma-separated search terms
+   - **Daily Lead Limit**: Maximum leads to collect (1-500)
+3. Fill in the form with your desired parameters
+4. Click "Execute" to run the workflow with those values
+
+### Form Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| Business Type | String | Yes | "HVAC contractor" | Target industry |
+| Target Locations | Multiline | Yes | Multiple cities | One location per line |
+| Search Keywords | String | Yes | Keywords | Comma-separated |
+| Daily Lead Limit | Number | No | 100 | Max leads (1-500) |
 
 ### Output Data Structure
+
+When you submit the form, the values are available as:
 
 ```json
 {
@@ -108,7 +108,7 @@ To change the search parameters, edit this node's values:
 
 ---
 
-## 3. Input Validation
+## 2. Input Validation
 
 **Node Type**: `Function`
 

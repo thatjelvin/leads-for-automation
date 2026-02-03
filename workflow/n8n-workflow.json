@@ -2,42 +2,44 @@
   "name": "HVAC Lead Automation",
   "nodes": [
     {
-      "parameters": {},
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [250, 300]
-    },
-    {
       "parameters": {
-        "values": {
-          "string": [
+        "fieldsUi": {
+          "values": [
             {
-              "name": "businessType",
-              "value": "HVAC contractor"
+              "displayName": "Business Type",
+              "fieldName": "businessType",
+              "fieldType": "string",
+              "required": true,
+              "defaultValue": "HVAC contractor"
             },
             {
-              "name": "targetLocations",
-              "value": "Los Angeles, CA\nMiami, FL\nPhoenix, AZ"
+              "displayName": "Target Locations",
+              "fieldName": "targetLocations",
+              "fieldType": "multiline",
+              "required": true,
+              "defaultValue": "Los Angeles, CA\nMiami, FL\nPhoenix, AZ"
             },
             {
-              "name": "searchKeywords",
-              "value": "HVAC contractor, air conditioning repair"
-            }
-          ],
-          "number": [
+              "displayName": "Search Keywords",
+              "fieldName": "searchKeywords",
+              "fieldType": "string",
+              "required": true,
+              "defaultValue": "HVAC contractor, air conditioning repair"
+            },
             {
-              "name": "dailyLeadLimit",
-              "value": 100
+              "displayName": "Daily Lead Limit",
+              "fieldName": "dailyLeadLimit",
+              "fieldType": "number",
+              "required": false,
+              "defaultValue": 100
             }
           ]
-        },
-        "options": {}
+        }
       },
-      "name": "Set Input Parameters",
-      "type": "n8n-nodes-base.set",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [350, 300]
+      "position": [250, 300]
     },
     {
       "parameters": {
@@ -46,7 +48,7 @@
       "name": "Input Validation",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
-      "position": [550, 300]
+      "position": [450, 300]
     },
     {
       "parameters": {
@@ -73,7 +75,7 @@
       "name": "Initialize Variables",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [750, 300]
+      "position": [650, 300]
     },
     {
       "parameters": {
@@ -339,18 +341,7 @@
     }
   ],
   "connections": {
-    "Manual Trigger": {
-      "main": [
-        [
-          {
-            "node": "Set Input Parameters",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Input Parameters": {
+    "Execute Workflow Trigger": {
       "main": [
         [
           {

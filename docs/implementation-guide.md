@@ -128,50 +128,32 @@ You'll need to obtain API keys for the following services:
    - Open "Append to Leads Sheet" node
    - Enter your Sheet ID in credentials
 
-### Step 4: Customize Input Parameters
-
-1. Open the workflow in n8n
-2. Double-click the **"Set Input Parameters"** node
-3. Edit the values according to your needs:
-   - **businessType**: Change to your target niche (e.g., "HVAC contractor")
-   - **targetLocations**: Enter locations one per line:
-     ```
-     Los Angeles, CA
-     Miami, FL
-     Phoenix, AZ
-     ```
-   - **searchKeywords**: Enter comma-separated keywords:
-     ```
-     HVAC contractor, air conditioning repair, heating services
-     ```
-   - **dailyLeadLimit**: Set your daily limit (default: 100, max: 500)
-4. Click "Save" to save the changes
-
-### Step 5: Test the Workflow
+### Step 4: Test the Workflow with Form Popup
 
 #### Manual Test Run
 
 1. With the workflow open in n8n, click the **"Execute Workflow"** button (top right)
-2. The workflow will run with your configured parameters
-3. Monitor the execution:
+2. A **form popup will appear** on your screen with fields:
+   - **Business Type**: Enter your target industry
+   - **Target Locations**: Enter cities (one per line)
+   - **Search Keywords**: Enter comma-separated keywords
+   - **Daily Lead Limit**: Enter number of leads (recommended: 5 for testing)
+
+3. Example test values:
+   ```
+   Business Type: HVAC contractor
+   Target Locations: 
+   Phoenix, AZ
+   
+   Search Keywords: HVAC repair, AC service
+   Daily Lead Limit: 5
+   ```
+
+4. Click **"Execute"** in the form popup
+5. The workflow will run with your entered parameters
+6. Monitor the execution:
    - Watch each node turn green as it completes
    - Check for any red (error) or yellow (warning) nodes
-4. Review the output data by clicking on each node
-
-#### Test with Small Limit
-
-For your first test, set the `dailyLeadLimit` to **5** in the "Set Input Parameters" node:
-```json
-{
-  "name": "dailyLeadLimit",
-  "value": 5
-}
-```
-
-This will:
-- Run quickly (~5 minutes)
-- Use minimal API credits
-- Let you verify the workflow works correctly
 
 #### Verify Results
 
@@ -182,7 +164,7 @@ This will:
    - No duplicates?
    - HVAC-relevant businesses?
 
-### Step 6: Optional - Schedule Daily Execution
+### Step 5: Optional - Schedule Daily Execution
 
 If you want the workflow to run automatically on a schedule:
 
@@ -196,58 +178,49 @@ If you want the workflow to run automatically on a schedule:
    - **Cron Expression**: `0 9 * * *` (runs at 9 AM daily)
    - **Timezone**: Select your local timezone
 
-3. Connect the Schedule Trigger:
-   - Remove the connection from "Manual Trigger"
-   - Connect "Schedule Trigger" → "Set Input Parameters"
-   - Keep "Manual Trigger" for manual runs
+3. Configure default values for scheduled runs:
+   - When using a Schedule Trigger, you'll need to provide default values
+   - Add a "Set" node after the Schedule Trigger with default parameters
+   - Connect: Schedule Trigger → Set (with defaults) → Input Validation
 
-4. Alternative: Use both triggers
-   - Keep "Manual Trigger" connected for manual runs
-   - Add "Schedule Trigger" connected to same "Set Input Parameters" node
-   - This allows both manual and scheduled execution
+4. Connect the Execute Workflow Trigger:
+   - Keep "Execute Workflow Trigger" connected for manual runs with form popup
+   - Add "Schedule Trigger" → "Set" (defaults) → "Input Validation" for automated runs
+   - This allows both manual (with form) and scheduled execution
 
 5. Save and activate the workflow:
    - Click "Save" button
-   - Toggle the "Active" switch (top-right)
+   - Toggle the "Active" switch (top-right) if you want scheduled runs
 
-**Note**: With a schedule trigger active, the workflow will run automatically at the specified time using the parameters in the "Set Input Parameters" node.
+**Note**: With both triggers:
+- Manual execution shows the form popup for you to enter values
+- Scheduled execution uses the default values from the Set node
 
 ---
 
 ## Configuration Options
 
-### Adjusting Lead Limit
+### Running Manual Tests
 
-Edit the "Set Input Parameters" node:
-```json
-{
-  "name": "dailyLeadLimit",
-  "value": 50
-}
-```
+Each time you click "Execute Workflow", you'll see a form popup where you can:
+- Adjust the lead limit (use 5-10 for quick tests)
+- Change target locations
+- Modify search keywords
+- Update business type
 
-### Changing Search Locations
+### For Scheduled Runs
 
-Edit the "Set Input Parameters" node, update the targetLocations value:
-```
-Los Angeles, CA
-Miami, FL
-Phoenix, AZ
-Dallas, TX
-```
+If you add a Schedule Trigger for automation:
+1. Add a "Set" node after the Schedule Trigger
+2. Configure default values in that Set node
+3. Connect: Schedule Trigger → Set (defaults) → Input Validation
 
-(Use actual line breaks in the n8n editor, or use \\n in JSON)
+### Changing Default Form Values
 
-### Customizing Keywords
-
-Edit the "Set Input Parameters" node, update the searchKeywords value:
-
-Modify search keywords for your niche in the "Set Input Parameters" node:
-```
-HVAC contractor, air conditioning repair, heating services, AC installation
-```
-
-(Use comma separation)
+Edit the "Execute Workflow Trigger" node:
+- Double-click the node
+- Modify the "Default Value" for each field
+- These appear pre-filled in the form popup
 
 ### Rate Limiting
 

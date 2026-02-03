@@ -6,14 +6,14 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ## Features
 
-- **Manual Execution**: Manually trigger workflow runs with customizable parameters
+- **Interactive Form Execution**: Popup form appears when you execute the workflow, allowing you to enter parameters
 - **Google Maps Scraping**: Automated business discovery with pagination
 - **Contact Enrichment**: Owner identification, email extraction, and LinkedIn matching
 - **Intelligent Deduplication**: Multi-field matching to prevent duplicates
 - **Rate Limiting**: Safe, compliant scraping with configurable delays
 - **Google Sheets Integration**: Automatic data storage with append-only writes
 - **Error Handling**: Comprehensive logging and retry mechanisms
-- **Daily Automation**: Can be scheduled for daily execution with configurable limits
+- **Optional Daily Automation**: Can be scheduled for daily execution with configurable limits
 
 ## Repository Structure
 
@@ -37,9 +37,14 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 1. **Import Workflow**: Import `workflow/n8n-workflow.json` into your n8n instance
 2. **Configure APIs**: Set up credentials for Google Maps, LinkedIn, and Google Sheets
-3. **Customize Parameters**: Edit the "Set Input Parameters" node with your search criteria
-4. **Test Run**: Click "Execute Workflow" button to run with your parameters (start with small lead limit like 5)
-5. **Optional - Schedule**: Add a Schedule Trigger node if you want automated daily execution
+3. **Execute with Form**: Click "Execute Workflow" button - a form will popup asking for:
+   - Business Type (e.g., "HVAC contractor")
+   - Target Locations (one per line)
+   - Search Keywords (comma-separated)
+   - Daily Lead Limit (default: 100)
+4. **Enter Parameters**: Fill in the form with your search criteria and submit
+5. **Watch Execution**: Monitor the workflow as it runs with your parameters
+6. **Optional - Schedule**: Add a Schedule Trigger node if you want automated daily execution
 
 ## Workflow Architecture
 
@@ -47,14 +52,9 @@ This repository contains a complete n8n automation workflow designed to scrape a
 
 ```
 ┌─────────────────┐
-│ Manual Trigger  │ (Click "Execute Workflow")
-│  - Click to run │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Set Input Params│ (Configurable Node)
-│  - Business Type│
+│Execute Workflow │ (Click button - Form Popup appears)
+│  Trigger + Form │
+│  - Business Type│ ← Enter values in popup form
 │  - Location(s)  │
 │  - Keywords     │
 │  - Lead Limit   │
