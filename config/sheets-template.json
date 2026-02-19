@@ -74,6 +74,19 @@
           "type": "string",
           "required": false,
           "description": "Search query used to find this lead"
+        },
+        {
+          "header": "Email Sent",
+          "type": "string",
+          "required": false,
+          "description": "Set to 'Yes' by Workflow 2 once the personalised email has been sent"
+        },
+        {
+          "header": "Email Sent Date",
+          "type": "datetime",
+          "required": false,
+          "format": "YYYY-MM-DD HH:mm:ss",
+          "description": "Timestamp when the personalised email was sent"
         }
       ],
       "formatting": {
@@ -190,11 +203,13 @@
     "setup": [
       "1. Create a new Google Sheet",
       "2. Create tabs: Leads, Metrics, Errors",
-      "3. Add column headers as specified",
+      "3. Add column headers as specified (13 columns for Leads tab, including 'Email Sent' and 'Email Sent Date')",
       "4. Freeze first row in each tab",
       "5. Apply data validation and conditional formatting",
       "6. Share with service account email (from n8n credentials)",
-      "7. Copy Sheet ID from URL and add to n8n workflow"
+      "7. Copy Sheet ID from URL and add to BOTH workflow JSON files (replace REPLACE_WITH_YOUR_SHEET_ID)",
+      "8. Workflow 1 (Get Leads) writes all columns except Email Sent and Email Sent Date",
+      "9. Workflow 2 (Send Personalised Emails) reads the sheet and fills Email Sent and Email Sent Date"
     ],
     "maintenance": [
       "- Review leads weekly for quality",

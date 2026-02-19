@@ -1,8 +1,13 @@
 # Implementation Guide
 
-## Step-by-Step Setup Instructions
+## Overview
 
-This guide walks you through deploying the HVAC lead automation workflow on your self-hosted n8n instance.
+This guide walks you through deploying both n8n workflows on your self-hosted instance:
+
+- **Workflow 1 — Get Leads** (`workflow-1-get-leads.json`): scrapes Google Maps, enriches contact data, and stores leads in Google Sheets.
+- **Workflow 2 — Send Personalised Emails** (`workflow-2-send-emails.json`): reads new leads from the sheet and sends a personalised outreach email to each business owner.
+
+---
 
 ## Prerequisites
 
@@ -27,398 +32,198 @@ docker run -it --rm \
 
 ### 2. Required API Keys
 
-You'll need to obtain API keys for the following services:
+**Workflow 1 — Get Leads:**
 
-1. **Google Maps Scraping**
-   - **Option A**: Outscraper API (https://outscraper.com)
-   - **Option B**: SerpApi (https://serpapi.com)
-   - **Option C**: ScraperAPI (https://www.scraperapi.com)
+1. **Google Maps Scraping** — [Outscraper](https://outscraper.com) (recommended), SerpApi, or ScraperAPI
+2. **Email Enrichment** — [Hunter.io](https://hunter.io/api) (recommended), Clearbit, or Snov.io
+3. **LinkedIn Scraping** — [RapidAPI LinkedIn Scraper](https://rapidapi.com)
+4. **Google Sheets** — Google Cloud project with Sheets API and a Service Account
 
-2. **Email Enrichment**
-   - Hunter.io API (https://hunter.io/api)
-   - Alternative: Clearbit, RocketReach, or Snov.io
+**Workflow 2 — Send Personalised Emails:**
 
-3. **LinkedIn Scraping**
-   - RapidAPI LinkedIn Scraper
-   - Alternative: Proxycurl, PhantomBuster
-
-4. **Google Sheets**
-   - Google Cloud Project with Sheets API enabled
-   - Service Account credentials
+5. **SMTP / Email** — Gmail, SendGrid, Mailgun, or any SMTP provider supported by n8n
 
 ### 3. System Requirements
 
-- **VPS**: 2GB RAM minimum, 4GB recommended
-- **Storage**: 20GB available
+- **VPS**: 2 GB RAM minimum, 4 GB recommended
+- **Storage**: 20 GB available
 - **OS**: Ubuntu 20.04+ or similar
 - **Node.js**: Version 16+
-- **Network**: Stable connection with proxy support (optional)
 
 ---
 
-## Installation Steps
+## Step 1 — Set Up Google Sheets
 
-### Step 1: Import Workflow
+1. Create a new Google Sheet named **"HVAC Leads Database"**
+2. Create a sheet tab called **Leads**
+3. Add these 13 column headers in row 1:
 
-1. Open n8n in your browser (http://your-server:5678)
-2. Click **Workflows** → **Import from File**
-3. Select `workflow/n8n-workflow.json` from this repository
-4. The workflow will be imported with all nodes configured
+   ```
+   Company Name | Owner First Name | Email | Phone Numbers | Website
+   | LinkedIn URL | Category | Location | Google Maps URL | Date Scraped
+   | Source Query | Email Sent | Email Sent Date
+   ```
 
-### Step 2: Set Up Credentials
+4. Copy the Sheet ID from the URL:
+   ```
+   https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit
+   ```
+5. Open **both** workflow JSON files and replace every occurrence of `REPLACE_WITH_YOUR_SHEET_ID` with your actual Sheet ID.
 
-#### Google Sheets Credentials
+---
 
-1. Go to Google Cloud Console (https://console.cloud.google.com)
-2. Create a new project or select existing
-3. Enable Google Sheets API
-4. Create Service Account:
-   - IAM & Admin → Service Accounts
-   - Create Service Account
-   - Download JSON key file
-5. In n8n:
-   - Settings → Credentials → New
-   - Type: Google Service Account
-   - Upload JSON key file
-6. Share your Google Sheet with the service account email
+## Step 2 — Configure Credentials in n8n
 
-#### Outscraper API Credentials
+#### Google Sheets
 
-1. Sign up at https://outscraper.com
-2. Get API key from dashboard
-3. In n8n:
-   - Settings → Credentials → New
-   - Type: Header Auth
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Enable the Google Sheets API
+3. Create a Service Account → download the JSON key
+4. In n8n: **Settings → Credentials → New → Google Service Account** → upload the JSON
+5. Share your Google Sheet with the service account email (Editor access)
+
+#### Outscraper (Google Maps)
+
+1. Sign up at [outscraper.com](https://outscraper.com) and get your API key
+2. In n8n: **Settings → Credentials → New → Header Auth**
    - Name: `X-API-Key`
-   - Value: Your API key
+   - Value: your key
 
-#### Hunter.io Credentials
+#### Hunter.io (Email Enrichment)
 
-1. Sign up at https://hunter.io
-2. Get API key from API section
-3. In n8n:
-   - Settings → Credentials → New
-   - Type: Query Auth
+1. Sign up at [hunter.io](https://hunter.io) and get your API key
+2. In n8n: **Settings → Credentials → New → Query Auth**
    - Name: `api_key`
-   - Value: Your API key
+   - Value: your key
 
-#### RapidAPI Credentials
+#### RapidAPI (LinkedIn)
 
-1. Sign up at https://rapidapi.com
-2. Subscribe to LinkedIn API
-3. Copy your RapidAPI key
-4. In n8n:
-   - Settings → Credentials → New
-   - Type: Header Auth
+1. Sign up at [rapidapi.com](https://rapidapi.com) and subscribe to the LinkedIn Scraper API
+2. In n8n: **Settings → Credentials → New → Header Auth**
    - Name: `X-RapidAPI-Key`
-   - Value: Your API key
+   - Value: your key
 
-### Step 3: Configure Google Sheet
+#### SMTP (for Workflow 2)
 
-1. Create a new Google Sheet
-2. Name it "HVAC Leads Database"
-3. Create a sheet tab called "Leads"
-4. Add headers in row 1:
-   ```
-   Company Name | Owner First Name | Email | Phone Numbers | Website | LinkedIn URL | Category | Location | Google Maps URL | Date Scraped | Source Query
-   ```
-5. Copy the Sheet ID from URL:
-   - URL format: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`
-6. Update the workflow:
-   - Open "Append to Leads Sheet" node
-   - Enter your Sheet ID in credentials
-
-### Step 4: Test the Workflow
-
-#### Get the Form URL
-
-1. Open the workflow in n8n
-2. Click on the **"Form Trigger"** node
-3. You'll see options for:
-   - **Test URL**: Use this for testing (temporary)
-   - **Production URL**: Use this for live workflow (permanent)
-4. Click **"Test URL"** to get the form link
-5. Copy the URL
-
-#### Test Form Submission
-
-1. Open the copied URL in your browser
-2. You'll see a form with fields:
-   - **Business Type**: Enter "HVAC contractor"
-   - **Target Locations**: Enter (one per line):
-     ```
-     Phoenix, AZ
-     ```
-   - **Search Keywords**: Enter "HVAC repair"
-   - **Daily Lead Limit**: Enter 5
-3. Click **"Submit"** button
-4. The workflow will automatically start executing
-
-#### Monitor Execution
-
-1. Go back to n8n
-2. Go to **Executions** panel (left sidebar)
-3. You should see a new execution running
-4. Click on it to watch the workflow execute
-5. Check each node output:
-   - Green = success
-   - Red = error
-   - Yellow = warning
-
-#### Verify Results
-
-1. Open your Google Sheet
-2. Verify 5 leads were added
-3. Check data quality:
-   - All fields populated?
-   - No duplicates?
-   - HVAC-relevant businesses?
-
-### Step 5: Optional - Schedule Daily Execution
-
-If you want the workflow to run automatically on a schedule:
-
-1. Add a **Schedule Trigger** node to the workflow:
-   - Click the "+" button to add a new node
-   - Search for "Schedule Trigger"
-   - Add it to the canvas
-
-2. Configure the schedule:
-   - **Trigger Interval**: Choose "Cron"
-   - **Cron Expression**: `0 9 * * *` (runs at 9 AM daily)
-   - **Timezone**: Select your local timezone
-
-3. Add default parameters:
-   - When using a Schedule Trigger, you need default values
-   - Add a "Set" node after the Schedule Trigger with default parameters
-   - Connect: Schedule Trigger → Set (with defaults) → Input Validation
-
-4. Keep both triggers if needed:
-   - **Form Trigger** for manual submissions via web form
-   - **Schedule Trigger** for automated daily runs
-   - Both can connect to the workflow
-
-5. Save and activate the workflow:
-   - Click "Save" button
-   - Toggle the "Active" switch (top-right) for scheduled runs
-
-**Note**: 
-- The Form Trigger URL remains active and can accept form submissions anytime
-- The Schedule Trigger runs automatically at the configured time with default values
+1. In n8n: **Settings → Credentials → New → SMTP**
+2. Enter your mail server host, port, username, and password
+3. Test the connection
 
 ---
 
-## Configuration Options
+## Step 3 — Import and Configure Workflow 1 (Get Leads)
 
-### Changing Form Parameters
+1. In n8n: **Workflows → Import from File**
+2. Select `workflow/workflow-1-get-leads.json`
+3. Assign credentials to each node that requires them (Google Sheets, Outscraper, Hunter.io, RapidAPI)
+4. Open the **Append to Leads Sheet** node and confirm your Sheet ID is correct
+5. Open the **Success Notification** node and update `fromEmail` / `toEmail` to your addresses
 
-The form is configured in the "Form Trigger" node. To customize:
+### Test Workflow 1
 
-1. Double-click the "Form Trigger" node
-2. Modify form settings:
-   - **Form Title**: Change the form heading
-   - **Form Description**: Update the description
-   - **Form Fields**: Add/remove/edit fields
-   - **Options**: Configure webhook path, success message, etc.
+1. Click the **Form Trigger** node and copy the **Test URL**
+2. Open the URL in your browser and submit the form:
+   - **Business Type**: HVAC contractor
+   - **Target Locations**: Phoenix, AZ
+   - **Search Keywords**: HVAC repair
+   - **Daily Lead Limit**: 5
+3. Watch the execution in the n8n **Executions** panel
+4. Open your Google Sheet and verify 5 leads were appended with **Email Sent** left blank
 
-### Using the Form
+---
 
-Each time someone (including you) submits the form:
-- The workflow automatically executes with the submitted values
-- No need to manually start the workflow
-- You can share the form URL with others
+## Step 4 — Import and Configure Workflow 2 (Send Personalised Emails)
 
-### For Scheduled Runs
+1. In n8n: **Workflows → Import from File**
+2. Select `workflow/workflow-2-send-emails.json`
+3. Assign credentials to each node (Google Sheets, SMTP)
+4. Open the **Send Personalised Email** node and set:
+   - `fromEmail`: your sender address (must match your SMTP credentials)
+5. Open the **Build Personalised Email** node and personalise the email template:
+   - Replace `Your Name`, `Your Title`, `your@email.com`, and `your-phone-number` with your details
+6. Open the **Read Leads Sheet** and **Mark Email Sent** nodes and confirm the Sheet ID
 
-If you add a Schedule Trigger:
-1. Add a "Set" node after the Schedule Trigger
-2. Configure default values in that Set node
-3. Connect: Schedule Trigger → Set (defaults) → Input Validation
-4. The form trigger can still be used for manual submissions
+### Test Workflow 2
 
-### Rate Limiting
+1. Manually trigger the workflow (click **Execute Workflow** in n8n)
+2. It will read your sheet, find leads with an email address and blank **Email Sent**, and send emails
+3. After each send, check that **Email Sent** = `Yes` and **Email Sent Date** is filled in the sheet
 
-Adjust delay in "Rate Limiter" node:
+### Activate the Daily Schedule
+
+1. Toggle the **Active** switch (top-right) on Workflow 2
+2. It will now run automatically every day at 10 AM and email any new leads from the previous day's scrape
+
+---
+
+## Configuration Reference
+
+### Changing the Email Schedule
+
+Open the **Schedule Trigger** node in Workflow 2 and change `triggerAtHour`:
+
 ```json
-{
-  "unit": "seconds",
-  "amount": "={{ Math.floor(Math.random() * 3) + 2 }}"
-}
+{ "triggerAtHour": 10 }   // 10 AM (default)
+{ "triggerAtHour": 8  }   // 8 AM
+{ "triggerAtHour": 14 }   // 2 PM
 ```
-- Current: 2-5 seconds (safe)
-- Aggressive: 1-2 seconds (risky)
-- Conservative: 5-10 seconds (very safe)
+
+### Adjusting the Scraping Rate Limiter (Workflow 1)
+
+Open the **Rate Limiter** node:
+
+```json
+{ "amount": "={{ Math.floor(Math.random() * 3) + 2 }}" }  // 2–5 s (default, safe)
+{ "amount": "={{ Math.floor(Math.random() * 5) + 5 }}" }  // 5–10 s (conservative)
+```
+
+### Adjusting the Email Rate Limiter (Workflow 2)
+
+Open the **Rate Limiter** node:
+
+```json
+{ "amount": "={{ Math.floor(Math.random() * 30) + 30 }}" }  // 30–60 s (default)
+{ "amount": "={{ Math.floor(Math.random() * 60) + 60 }}" }  // 60–120 s (conservative)
+```
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+### Workflow 1
 
-#### 1. Form Not Loading
+| Problem | Likely Cause | Fix |
+|---------|-------------|-----|
+| Form URL returns 404 | n8n not running | Restart n8n; check webhook path |
+| HTTP 403/429 from Outscraper | API quota exceeded | Check quota; increase Rate Limiter delay |
+| No emails found | Hunter.io key invalid or no MX | Verify key; try a different domain |
+| Duplicates in sheet | Deduplication node issue | Clear test data; check dedup function |
 
-**Problem**: Form URL returns 404
+### Workflow 2
 
-**Solution**:
-- Check n8n is running
-- Verify webhook path in Form Trigger node
-- Restart n8n service
-
-#### 2. Google Maps Scraping Fails
-
-**Problem**: HTTP 403 or 429 errors
-
-**Solutions**:
-- Verify API key is correct
-- Check API quota/limits
-- Increase rate limiter delay
-- Use proxy/VPN
-- Switch to different scraping service
-
-#### 3. No Emails Found
-
-**Problem**: Email enrichment returns empty
-
-**Solutions**:
-- Verify Hunter.io API key
-- Check if domain has MX records
-- Try alternative email finder
-- Increase search limit in Hunter.io node
-
-#### 4. Duplicates in Sheet
-
-**Problem**: Same companies appearing multiple times
-
-**Solutions**:
-- Check deduplication function
-- Verify hash comparison logic
-- Add Google Sheets lookup step
-- Clear test data from sheet
-
-#### 5. LinkedIn Not Matching
-
-**Problem**: LinkedIn URLs not found
-
-**Solutions**:
-- Verify RapidAPI subscription is active
-- Check company name formatting
-- Increase search tolerance
-- Use fuzzy matching
-
-### Error Messages
-
-#### "API quota exceeded"
-- Wait for quota reset (usually 24 hours)
-- Upgrade API plan
-- Reduce daily lead limit
-
-#### "Invalid credentials"
-- Re-enter API keys
-- Check credential type matches node expectation
-- Verify no extra spaces in keys
-
-#### "Timeout error"
-- Increase timeout in HTTP node (30-60 seconds)
-- Check internet connection
-- Verify target site is accessible
-
----
-
-## Performance Optimization
-
-### Parallel Processing
-
-Enable parallel execution in n8n settings:
-```json
-{
-  "executions": {
-    "mode": "queue",
-    "concurrency": 3
-  }
-}
-```
-
-### Caching
-
-Add caching for repeated lookups:
-- Use Redis for deduplication cache
-- Cache domain lookups (24 hours)
-- Cache LinkedIn searches (7 days)
-
-### Selective Enrichment
-
-Only enrich high-quality leads:
-- Skip enrichment if no website
-- Skip LinkedIn if no owner name
-- Skip email if already found
-
-### Batch Processing
-
-Process in batches to manage memory:
-- 20-50 leads per batch
-- Clear variables between batches
-- Use workflow splitting
-
----
-
-## Scaling Considerations
-
-### 100+ Leads Per Day
-
-- Use proxy rotation service
-- Implement IP rotation
-- Add delays between batches
-- Monitor API quotas
-
-### Multiple Niches
-
-- Clone workflow for each niche
-- Use shared Google Sheet with niche column
-- Implement queue system
-
-### Enterprise Scale (1000+ leads/day)
-
-- Use dedicated scraping infrastructure
-- Implement job queue (Bull/Redis)
-- Add horizontal scaling
-- Use enterprise API plans
+| Problem | Likely Cause | Fix |
+|---------|-------------|-----|
+| No emails sent | All leads already marked sent | Add new leads via Workflow 1 first |
+| SMTP error | Wrong credentials | Re-enter SMTP details; check port (587/465) |
+| Sheet not updating | Wrong Sheet ID or column name | Verify Sheet ID and column header spelling |
+| Rate limit from email provider | Sending too fast | Increase Rate Limiter delay |
 
 ---
 
 ## Maintenance Schedule
 
-### Daily
-- Check execution logs
-- Verify lead quality
-- Monitor API usage
-
-### Weekly
-- Review error logs
-- Update search keywords
-- Clean duplicate entries
-
-### Monthly
-- Analyze success metrics
-- Update API credentials
-- Review and optimize nodes
-- Check API usage vs. cost
+| Frequency | Task |
+|-----------|------|
+| Daily | Check n8n execution logs for errors |
+| Weekly | Review lead quality in Google Sheet |
+| Monthly | Rotate API keys; analyse email reply rates |
 
 ---
 
 ## Next Steps
 
-1. **Test thoroughly** with small limits (5-10 leads)
-2. **Monitor** first few daily runs
-3. **Optimize** based on results
-4. **Scale** gradually to 100 leads/day
-5. **Review** [Best Practices](best-practices.md) for long-term success
-
----
-
-## Support
-
-For issues specific to:
-- **n8n**: https://community.n8n.io
-- **This workflow**: Open GitHub issue
-- **API services**: Contact respective support teams
-
+1. **Test thoroughly** with a small lead limit (5–10 leads) before scaling
+2. **Monitor** the first few daily runs of both workflows
+3. **Personalise** the email template in Workflow 2 with your real details
+4. **Scale** Workflow 1 gradually to 100 leads/day
+5. Review [Best Practices](best-practices.md) for compliance and optimisation
