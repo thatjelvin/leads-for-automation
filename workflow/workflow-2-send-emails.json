@@ -1,0 +1,322 @@
+{
+  "name": "Workflow 2: Send Personalised Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "name": "Read Leads Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Filter leads that have an email address but have not been contacted yet\nconst leads = $input.all();\nconst uncontacted = leads.filter(item => {\n  const lead = item.json;\n  return lead['Email'] &&\n         lead['Email'].toString().trim() !== '' &&\n         (!lead['Email Sent'] || lead['Email Sent'].toString().trim() === '');\n});\n\nif (uncontacted.length === 0) {\n  return [{ json: { skipOutreach: true, message: 'No new leads to contact today' } }];\n}\n\nreturn uncontacted;"
+      },
+      "name": "Filter Unsent Leads",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skipOutreach === true }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "name": "Has Leads to Send",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build a personalised outreach email for each lead\nconst lead = $input.item.json;\nconst ownerName = lead['Owner First Name'] && lead['Owner First Name'].toString().trim() !== ''\n  ? lead['Owner First Name'].toString().trim()\n  : 'there';\nconst companyName = lead['Company Name'] || 'your company';\nconst category = lead['Category'] || 'HVAC';\nconst location = lead['Location'] || 'your area';\n\nconst subject = `Quick question about ${companyName}'s growth`;\n\nconst htmlBody = `\n<html>\n<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px;\">\n  <p>Hi ${ownerName},</p>\n\n  <p>I came across <strong>${companyName}</strong> while researching ${category} businesses\n  in ${location}, and I was genuinely impressed by your reputation in the area.</p>\n\n  <p>I help local ${category} businesses like yours generate more leads and streamline\n  their operations using automation. Many of my clients have seen a\n  <strong>30–50% increase in booked jobs</strong> within the first 90 days.</p>\n\n  <p>I'd love to share a quick idea that I think could specifically help\n  <strong>${companyName}</strong>. Would you be open to a 15-minute call this week?</p>\n\n  <p>Just reply to this email and we can find a time that works for you.</p>\n\n  <p>Looking forward to connecting,</p>\n\n  <p>\n    <strong>Your Name</strong><br>\n    Your Title<br>\n    your@email.com<br>\n    your-phone-number\n  </p>\n</body>\n</html>\n`;\n\nreturn {\n  json: {\n    ...lead,\n    emailSubject: subject,\n    emailBody: htmlBody,\n    recipientEmail: lead['Email'],\n    recipientName: ownerName\n  }\n};"
+      },
+      "name": "Build Personalised Email",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": "={{ Math.floor(Math.random() * 30) + 30 }}"
+      },
+      "name": "Rate Limiter",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "your@email.com",
+        "toEmail": "={{ $json.recipientEmail }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailFormat": "html",
+        "message": "={{ $json.emailBody }}"
+      },
+      "name": "Send Personalised Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company Name": "={{ $json['Company Name'] }}",
+            "Email Sent": "Yes",
+            "Email Sent Date": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": ["Company Name"]
+        },
+        "options": {}
+      },
+      "name": "Mark Email Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1650, 200],
+      "continueOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate execution summary\nconst sentItems = $('Send Personalised Email').all();\nconst allUncontacted = $('Filter Unsent Leads').all();\n\nconst summary = {\n  totalLeadsProcessed: allUncontacted.length,\n  emailsSent: sentItems.length,\n  timestamp: new Date().toISOString()\n};\n\nreturn { json: summary };"
+      },
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@yourdomain.com",
+        "toEmail": "admin@yourdomain.com",
+        "subject": "Email Outreach Complete - {{ $json.emailsSent }} Emails Sent",
+        "emailFormat": "html",
+        "message": "=<h2>Daily Email Outreach Summary</h2>\n<ul>\n<li>Emails Sent: {{ $json.emailsSent }}</li>\n<li>Total Leads Processed: {{ $json.totalLeadsProcessed }}</li>\n<li>Timestamp: {{ $json.timestamp }}</li>\n</ul>"
+      },
+      "name": "Success Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2050, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {},
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [1250, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error details\nconst error = $input.item.json.error;\nconst execution = $input.item.json.execution;\n\nconst errorLog = {\n  timestamp: new Date().toISOString(),\n  workflowId: execution.workflowId,\n  executionId: execution.id,\n  nodeName: error.node.name,\n  errorMessage: error.message,\n  errorStack: error.stack\n};\n\nreturn { json: errorLog };"
+      },
+      "name": "Log Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1450, 500]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourdomain.com",
+        "toEmail": "admin@yourdomain.com",
+        "subject": "Send Emails Workflow Error - {{ $json.nodeName }}",
+        "message": "=An error occurred in the Send Personalised Emails workflow:\n\nNode: {{ $json.nodeName }}\nError: {{ $json.errorMessage }}\nTime: {{ $json.timestamp }}\n\nPlease investigate."
+      },
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1650, 500],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Leads Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads Sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter Unsent Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Unsent Leads": {
+      "main": [
+        [
+          {
+            "node": "Has Leads to Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Leads to Send": {
+      "main": [
+        [
+          {
+            "node": "Build Personalised Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Personalised Email": {
+      "main": [
+        [
+          {
+            "node": "Rate Limiter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limiter": {
+      "main": [
+        [
+          {
+            "node": "Send Personalised Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Personalised Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Build Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary": {
+      "main": [
+        [
+          {
+            "node": "Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Send Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-02-19T00:00:00.000Z",
+  "versionId": "1"
+}

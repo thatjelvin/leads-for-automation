@@ -1,5 +1,5 @@
 {
-  "name": "HVAC Lead Automation",
+  "name": "Workflow 1: Get Leads",
   "nodes": [
     {
       "parameters": {
@@ -266,7 +266,9 @@
             "Location": "={{ $json.city }}, {{ $json.state }}",
             "Google Maps URL": "={{ $json.mapsUrl }}",
             "Date Scraped": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
-            "Source Query": "={{ $('Loop Control').item.json.searchQuery }}"
+            "Source Query": "={{ $('Loop Control').item.json.searchQuery }}",
+            "Email Sent": "",
+            "Email Sent Date": ""
           }
         },
         "options": {}
@@ -295,9 +297,9 @@
       "parameters": {
         "fromEmail": "notifications@yourdomain.com",
         "toEmail": "admin@yourdomain.com",
-        "subject": "HVAC Lead Generation Complete - {{ $json.qualifiedLeads }} New Leads",
+        "subject": "Lead Generation Complete - {{ $json.qualifiedLeads }} New Leads Added",
         "emailFormat": "html",
-        "message": "=<h2>Daily Lead Generation Summary</h2>\n<ul>\n<li>Qualified Leads: {{ $json.qualifiedLeads }}</li>\n<li>Total Scraped: {{ $json.totalScraped }}</li>\n<li>Duplicates Removed: {{ $json.duplicatesRemoved }}</li>\n<li>Execution Time: {{ $json.executionTime }}s</li>\n</ul>"
+        "message": "=<h2>Daily Lead Generation Summary</h2>\n<ul>\n<li>Qualified Leads: {{ $json.qualifiedLeads }}</li>\n<li>Total Scraped: {{ $json.totalScraped }}</li>\n<li>Duplicates Removed: {{ $json.duplicatesRemoved }}</li>\n<li>Execution Time: {{ $json.executionTime }}s</li>\n</ul>\n<p>Leads are ready in your Google Sheet. Run Workflow 2 to send personalised emails.</p>"
       },
       "name": "Success Notification",
       "type": "n8n-nodes-base.emailSend",
@@ -325,8 +327,8 @@
       "parameters": {
         "fromEmail": "alerts@yourdomain.com",
         "toEmail": "admin@yourdomain.com",
-        "subject": "HVAC Workflow Error - {{ $json.nodeName }}",
-        "message": "=An error occurred in the HVAC lead workflow:\n\nNode: {{ $json.nodeName }}\nError: {{ $json.errorMessage }}\nTime: {{ $json.timestamp }}\n\nPlease investigate."
+        "subject": "Get Leads Workflow Error - {{ $json.nodeName }}",
+        "message": "=An error occurred in the Get Leads workflow:\n\nNode: {{ $json.nodeName }}\nError: {{ $json.errorMessage }}\nTime: {{ $json.timestamp }}\n\nPlease investigate."
       },
       "name": "Send Error Alert",
       "type": "n8n-nodes-base.emailSend",
@@ -527,6 +529,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2026-02-03T00:00:00.000Z",
+  "updatedAt": "2026-02-19T00:00:00.000Z",
   "versionId": "1"
 }

@@ -1,194 +1,157 @@
-# HVAC Lead Automation Workflow - n8n Implementation
+# HVAC Lead Automation — Two-Workflow n8n Implementation
 
 ## Overview
 
-This repository contains a complete n8n automation workflow designed to scrape and enrich B2B leads for HVAC businesses at scale using the n8n Model Context Protocol (MCP). The system targets ~100 qualified leads per day with full enrichment and deduplication.
+This repository contains two focused n8n automation workflows that work together to find HVAC business leads and send personalised outreach emails to their owners.
 
-## Features
+| # | Workflow | File | What it does |
+|---|---------|------|-------------|
+| 1 | **Get Leads** | `workflow/workflow-1-get-leads.json` | Scrapes Google Maps, enriches contact data, deduplicates, and stores leads in Google Sheets |
+| 2 | **Send Personalised Emails** | `workflow/workflow-2-send-emails.json` | Reads new leads from the sheet and sends a personalised outreach email to each business owner |
 
-- **Form-Based Lead Collection**: Customizable intake form for specifying search criteria via webhook
-- **Google Maps Scraping**: Automated business discovery with pagination
-- **Contact Enrichment**: Owner identification, email extraction, and LinkedIn matching
-- **Intelligent Deduplication**: Multi-field matching to prevent duplicates
-- **Rate Limiting**: Safe, compliant scraping with configurable delays
-- **Google Sheets Integration**: Automatic data storage with append-only writes
-- **Error Handling**: Comprehensive logging and retry mechanisms
-- **Daily Automation**: Scheduled execution with configurable limits
+Run Workflow 1 to fill your leads sheet, then Workflow 2 (scheduled daily) picks up every lead that has an email address and hasn't been contacted yet.
+
+---
 
 ## Repository Structure
 
 ```
 .
-├── README.md                           # This file
+├── README.md
 ├── workflow/
-│   ├── n8n-workflow.json              # Complete n8n workflow (importable)
-│   └── workflow-architecture.md        # High-level architecture diagram
+│   ├── workflow-1-get-leads.json        # Import into n8n: lead scraping workflow
+│   ├── workflow-2-send-emails.json      # Import into n8n: email outreach workflow
+│   └── workflow-architecture.md        # Architecture diagrams for both workflows
 ├── docs/
-│   ├── node-breakdown.md              # Detailed node-by-node guide
-│   ├── implementation-guide.md        # Step-by-step setup instructions
-│   ├── api-integrations.md            # API keys and configurations
-│   └── best-practices.md              # Scaling, compliance, and optimization
+│   ├── implementation-guide.md         # Step-by-step setup for both workflows
+│   ├── node-breakdown.md               # Detailed node-by-node reference
+│   ├── api-integrations.md             # API keys and service configurations
+│   └── best-practices.md              # Scaling, compliance, and optimisation
 └── config/
-    ├── form-template.json             # Example form configuration
-    └── sheets-template.json           # Google Sheets schema
+    ├── form-template.json              # Lead generation form configuration
+    └── sheets-template.json           # Google Sheets schema (13 columns)
 ```
-
-## Quick Start
-
-1. **Import Workflow**: Import `workflow/n8n-workflow.json` into your n8n instance
-2. **Configure APIs**: Set up credentials for Google Maps, LinkedIn, and Google Sheets
-3. **Get Form URL**: Open the Form Trigger node and copy the webhook URL
-4. **Submit Form**: Visit the form URL in your browser and enter:
-   - Business Type (e.g., "HVAC contractor")
-   - Target Locations (one per line)
-   - Search Keywords (comma-separated)
-   - Daily Lead Limit (default: 100)
-5. **Submit**: The workflow will automatically run when you submit the form
-6. **Optional - Schedule**: Add a Schedule Trigger node if you want automated daily execution
-
-## Workflow Architecture
-
-### High-Level Flow
-
-```
-┌─────────────────┐
-│  Form Trigger   │ (Webhook/Form Node)
-│  - Business Type│
-│  - Location(s)  │
-│  - Keywords     │
-│  - Lead Limit   │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│   Validation    │ (Function Node)
-│  - Input check  │
-│  - Format data  │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│  Google Maps    │ (HTTP Request + Loop)
-│    Scraper      │
-│  - Search query │
-│  - Pagination   │
-│  - Extract data │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│  Enrichment     │ (Multiple HTTP + MCP)
-│  - Website scan │
-│  - Email finder │
-│  - LinkedIn     │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Deduplication   │ (Function + Compare)
-│  - Name match   │
-│  - Phone match  │
-│  - URL match    │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Google Sheets   │ (Append to Sheet)
-│  - Store leads  │
-│  - Log metadata │
-└────────┬────────┘
-         │
-         v
-┌─────────────────┐
-│ Error Handler   │ (Error Trigger)
-│  - Log failures │
-│  - Send alerts  │
-└─────────────────┘
-```
-
-## Target Metrics
-
-- **Daily Leads**: ~100 qualified leads
-- **Success Rate**: >95% data extraction
-- **Enrichment Rate**: >80% with email/owner info
-- **Duplicate Rate**: <5%
-- **Execution Time**: 30-45 minutes per batch
-
-## Prerequisites
-
-### n8n Setup
-- Self-hosted n8n instance (VPS recommended)
-- n8n version: 1.0.0 or higher
-- n8n MCP support enabled
-
-### API Access
-- Google Maps API (or scraping proxy service)
-- Hunter.io or similar email finder API (optional)
-- LinkedIn Scraper API (RapidAPI or similar)
-- Google Sheets API credentials
-
-### Resources
-- VPS with 2GB+ RAM
-- Stable internet connection
-- Proxy rotation service (recommended for scale)
-
-## Key Components
-
-### 1. Form Intake Node
-- **Type**: Webhook / n8n Form Trigger
-- **Purpose**: Collect search parameters
-- **Fields**: Business type, location, keywords, daily limit
-
-### 2. Google Maps Scraper
-- **Type**: HTTP Request + Loop Node
-- **Purpose**: Search and extract business listings
-- **Rate Limit**: 2-5 second delays between requests
-
-### 3. Enrichment Pipeline
-- **Components**: Website parser, Email finder, LinkedIn matcher
-- **MCP Usage**: Intelligent parsing of unstructured data
-- **Fallbacks**: Multiple data sources per field
-
-### 4. Deduplication Logic
-- **Method**: Hash-based comparison
-- **Fields**: Company name, phone, website
-- **Storage**: In-memory or Redis cache
-
-### 5. Data Storage
-- **Primary**: Google Sheets (append mode)
-- **Backup**: CSV export option
-- **Schema**: 10 columns with metadata
-
-## Security & Compliance
-
-- **Rate Limiting**: Respectful delays to avoid ToS violations
-- **Data Privacy**: GDPR-compliant data handling
-- **API Security**: Environment variables for credentials
-- **Error Logging**: No sensitive data in logs
-
-## Monitoring & Maintenance
-
-- **Daily Health Checks**: Automated workflow validation
-- **Error Notifications**: Email/Slack alerts on failures
-- **Performance Metrics**: Track success rate and timing
-- **Monthly Review**: Adjust scraping patterns and sources
-
-## Support & Documentation
-
-Detailed implementation guides are available in the `docs/` directory:
-- [Node-by-Node Breakdown](docs/node-breakdown.md)
-- [Implementation Guide](docs/implementation-guide.md)
-- [API Integrations](docs/api-integrations.md)
-- [Best Practices](docs/best-practices.md)
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Author
-
-Jelvin Kiteete - HVAC Automation Specialist
 
 ---
 
-**Ready to deploy?** Start with the [Implementation Guide](docs/implementation-guide.md)
+## Quick Start
+
+### Step 1 — Set up your Google Sheet
+
+Create a sheet with a **Leads** tab containing these 13 columns (in order):
+
+```
+Company Name | Owner First Name | Email | Phone Numbers | Website | LinkedIn URL
+| Category | Location | Google Maps URL | Date Scraped | Source Query
+| Email Sent | Email Sent Date
+```
+
+Copy the Sheet ID from the URL (`https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`) and replace `REPLACE_WITH_YOUR_SHEET_ID` in **both** workflow JSON files.
+
+### Step 2 — Import Workflow 1: Get Leads
+
+1. Open n8n → **Workflows** → **Import from File**
+2. Select `workflow/workflow-1-get-leads.json`
+3. Add your API credentials (Outscraper, Hunter.io, RapidAPI, Google Sheets)
+4. Open the Form Trigger node and copy the **Production URL**
+5. Submit the form with your target business type, locations, and keywords
+
+### Step 3 — Import Workflow 2: Send Personalised Emails
+
+1. Open n8n → **Workflows** → **Import from File**
+2. Select `workflow/workflow-2-send-emails.json`
+3. Open the **Send Personalised Email** node and set your `fromEmail` address
+4. Add your SMTP credentials
+5. Activate the workflow — it runs daily at 10 AM, picks up all leads with an email address that haven't been contacted yet, and sends each one a personalised outreach email
+
+---
+
+## How the Two Workflows Connect
+
+```
+WORKFLOW 1: GET LEADS
+  Form Trigger
+      │
+      ▼
+  Validate → Scrape Google Maps → Enrich (website, email, LinkedIn) → Deduplicate
+      │
+      ▼
+  Append row to Google Sheet  ◀── Email Sent and Email Sent Date left blank
+      │
+      ▼
+  Notify admin
+
+            ────────────── Google Sheet is the handoff ──────────────
+
+WORKFLOW 2: SEND PERSONALISED EMAILS  (runs daily at 10 AM)
+  Schedule Trigger
+      │
+      ▼
+  Read all rows from Google Sheet
+      │
+      ▼
+  Filter: has Email AND Email Sent is blank
+      │
+      ▼
+  Build personalised HTML email (uses owner name, company, location, category)
+      │
+      ▼
+  Rate limiter (30–60 s between sends)  →  Send Email  →  Mark Email Sent in Sheet
+      │
+      ▼
+  Notify admin with summary
+```
+
+---
+
+## Target Metrics
+
+| Metric | Target |
+|--------|--------|
+| Daily Leads (Workflow 1) | ~100 qualified leads |
+| Data Enrichment Rate | >80% with email / owner info |
+| Duplicate Rate | <5% |
+| Emails Sent per Day (Workflow 2) | Up to 100 (matches new leads) |
+| Execution Time (Workflow 1) | 30–45 minutes |
+
+---
+
+## Prerequisites
+
+### n8n
+- Self-hosted n8n instance (version 1.0.0+)
+- VPS with 2 GB+ RAM recommended
+
+### API Keys (Workflow 1)
+- **Outscraper** — Google Maps scraping
+- **Hunter.io** — Email enrichment
+- **RapidAPI** (LinkedIn Scraper) — LinkedIn matching
+- **Google Sheets API** — Lead storage
+
+### Email (Workflow 2)
+- SMTP credentials (Gmail, SendGrid, or any provider)
+- A sender email address configured in the **Send Personalised Email** node
+
+---
+
+## Documentation
+
+- [Workflow Architecture](workflow/workflow-architecture.md) — diagrams and node tables for both workflows
+- [Implementation Guide](docs/implementation-guide.md) — step-by-step setup
+- [API Integrations](docs/api-integrations.md) — API keys and configurations
+- [Node Breakdown](docs/node-breakdown.md) — detailed per-node reference
+- [Best Practices](docs/best-practices.md) — scaling, compliance, and optimisation
+
+---
+
+## License
+
+MIT License — see LICENSE file for details.
+
+## Author
+
+Jelvin Kiteete — HVAC Automation Specialist
+
+---
+
+**Ready to deploy?** Start with the [Implementation Guide](docs/implementation-guide.md).
